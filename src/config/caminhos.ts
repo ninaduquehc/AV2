@@ -1,6 +1,8 @@
 import * as caminho from "path";
 
-export const DIR_DATA = caminho.join(__dirname, "..", "..", "data");
+export const DIR_DATA = process.env.GREENCODE_DATA_DIR
+  ? caminho.resolve(process.env.GREENCODE_DATA_DIR)
+  : caminho.join(__dirname, "..", "..", "data");
 export const ARQ_CONFIG = caminho.join(DIR_DATA, "config.json");
 export const ARQ_CREDENCIAIS = caminho.join(DIR_DATA, "credenciais.enc");
 export const ARQ_ORGANIZACOES = caminho.join(DIR_DATA, "organizacoes.enc");

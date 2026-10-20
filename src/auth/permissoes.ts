@@ -10,6 +10,7 @@ export type Acao =
   | "alterar_estado"
   | "consultar_historico"
   | "rastrear_equipamento"
+  | "consultar_cadastros"
   | "gerar_relatorio";
 
 const PERMISSOES: Record<Acao, string[]> = {
@@ -25,6 +26,7 @@ const PERMISSOES: Record<Acao, string[]> = {
   consultar_historico: ["auditor", "administrador"],
   rastrear_equipamento: ["auditor", "administrador"],
   gerar_relatorio: ["auditor", "administrador"],
+  consultar_cadastros: ["operador_cadastro", "gestor_almoxarifado", "auditor", "administrador"],
 };
 
 export function temPermissao(papel: string, acao: Acao): boolean {

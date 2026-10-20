@@ -41,7 +41,7 @@ async function main(): Promise<void> {
     console.log("\n2) CNPJ inválido (dígitos verificadores não conferem)");
     const antesOrg = contarRegistros<Organizacao>(ARQ_ORGANIZACOES);
     try {
-        executarOrganizacoes({ nome: "Empresa Teste", cnpj: "11.111.111/1111-11", tipo: "gerador" }, ctx);
+        executarOrganizacoes("criar", { nome: "Empresa Teste", cnpj: "11.111.111/1111-11", tipo: "gerador" }, ctx);
         checar("organização com CNPJ inválido não é persistida", contarRegistros<Organizacao>(ARQ_ORGANIZACOES) === antesOrg);
     } catch (e) {
         checar("CNPJ inválido é rejeitado com RegraDeNegocioError", e instanceof RegraDeNegocioError);
@@ -49,10 +49,10 @@ async function main(): Promise<void> {
 
     console.log("\n3) CNPJ duplicado");
     const cnpjValido = "11.222.333/0001-81";
-    executarOrganizacoes({ nome: "Empresa Válida", cnpj: cnpjValido, tipo: "gerador" }, ctx);
+    executarOrganizacoes("criar", { nome: "Empresa Válida", cnpj: cnpjValido, tipo: "gerador" }, ctx);
     const apos1a = contarRegistros<Organizacao>(ARQ_ORGANIZACOES);
     try {
-        executarOrganizacoes({ nome: "Empresa Duplicada", cnpj: cnpjValido, tipo: "gerador" }, ctx);
+        executarOrganizacoes("criar", { nome: "Empresa Duplicada", cnpj: cnpjValido, tipo: "gerador" }, ctx);
         checar("segundo cadastro com mesmo CNPJ é rejeitado", contarRegistros<Organizacao>(ARQ_ORGANIZACOES) === apos1a);
     } catch (e) {
         checar("CNPJ duplicado é rejeitado com RegraDeNegocioError", e instanceof RegraDeNegocioError);
@@ -63,7 +63,7 @@ async function main(): Promise<void> {
     console.log("\n4) Lote com data de entrada futura");
     const antesLote = contarRegistros<Lote>(ARQ_LOTES);
     try {
-        executarLotes({ org: org.id, nf: "NF-FUTURA", transp: "Transp", data: "2099-01-01" }, ctx);
+        executarLotes("criar", { org: org.id, nf: "NF-FUTURA", transp: "Transp", data: "2099-01-01" }, ctx);
         checar("lote com data futura não é persistido", contarRegistros<Lote>(ARQ_LOTES) === antesLote);
     } catch (e) {
         checar("lote com data futura é rejeitado com RegraDeNegocioError", e instanceof RegraDeNegocioError);
@@ -71,14 +71,14 @@ async function main(): Promise<void> {
 
     console.log("\n5) Lote com data anterior a 90 dias");
     try {
-        executarLotes({ org: org.id, nf: "NF-ANTIGA", transp: "Transp", data: "2020-01-01" }, ctx);
+        executarLotes("criar", { org: org.id, nf: "NF-ANTIGA", transp: "Transp", data: "2020-01-01" }, ctx);
         checar("lote com data muito antiga não é persistido", contarRegistros<Lote>(ARQ_LOTES) === antesLote);
     } catch (e) {
         checar("lote com data muito antiga é rejeitado com RegraDeNegocioError", e instanceof RegraDeNegocioError);
     }
 
     console.log("\n6) Lote válido, para os próximos cenários");
-    executarLotes({ org: org.id, nf: "NF-OK", transp: "Transp" }, ctx);
+    executarLotes("criar", { org: org.id, nf: "NF-OK", transp: "Transp" }, ctx);
     const lote = new Repositorio<Lote>(ARQ_LOTES).carregar().map((l) => Lote.deJSON(l))[0];
 
     console.log("\n7) Desmonte sem triagem completa");

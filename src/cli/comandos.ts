@@ -25,12 +25,27 @@ export async function executarLinha(linha: string, ctx: { usuario: string; papel
   if (parsed.acaoPrincipal === "ajuda") {
     console.log("\nComandos disponíveis:");
     console.log("- usuario criar --usuario <NOME> --senha <SENHA> --papel <PAPEL>");
+    console.log("- usuario listar | consultar --usuario <NOME>");
+    console.log("- usuario atualizar --usuario <NOME> [--senha <SENHA>] [--papel <PAPEL>]");
+    console.log("- usuario remover --usuario <NOME>");
     console.log("- parametro ver");
     console.log("- parametro definir --aliquota <NUMERO> --depreciacao <NUMERO>");
     console.log("- organizacao criar --nome <NOME> --cnpj <CNPJ> --tipo <TIPO>");
-    console.log("- contrato criar --org <ORG_ID> --inicio <AAAA-MM-DD> --fim <AAAA-MM-DD>");
-    console.log("- lote criar --org <ORG_ID> --nf <NF> --transp <TRANSP>");
+    console.log("- organizacao listar | consultar --id <ORG_ID>");
+    console.log("- organizacao atualizar --id <ORG_ID> [--nome <NOME>] [--cnpj <CNPJ>] [--tipo <TIPO>]");
+    console.log("- organizacao remover --id <ORG_ID>");
+    console.log("- contrato criar --org <ORG_ID> --inicio <AAAA-MM-DD> --fim <AAAA-MM-DD> [--termos TEXTO]");
+    console.log("- contrato listar [--org <ORG_ID>] | consultar --id <CONTRATO_ID>");
+    console.log("- contrato atualizar --id <CONTRATO_ID> [--inicio AAAA-MM-DD] [--fim AAAA-MM-DD] [--termos TEXTO]");
+    console.log("- contrato remover --id <CONTRATO_ID>");
+    console.log("- lote criar --org <ORG_ID> --nf <NF> --transp <TRANSP> [--data AAAA-MM-DD]");
+    console.log("- lote listar [--org <ORG_ID>] | consultar --id <LOTE_ID>");
+    console.log("- lote atualizar --id <LOTE_ID> [--nf <NF>] [--transp <TRANSP>] [--data AAAA-MM-DD]");
+    console.log("- lote remover --id <LOTE_ID>");
     console.log("- equipamento criar --lote <LOTE> --tipo <TIPO> --modelo <MOD> [--id COD] [--estado ESTADO]");
+    console.log("- equipamento listar [--lote <LOTE>] [--status <STATUS>] | consultar --id <COD>");
+    console.log("- equipamento atualizar --id <COD> [--tipo <TIPO>] [--modelo <MOD>]");
+    console.log("- equipamento remover --id <COD>");
     console.log("- equipamento triar --id <COD>");
     console.log("- equipamento desmonte --id <COD>");
     console.log("- equipamento estado --id <COD> --novo <ESTADO> [--justificativa TEXTO]");
@@ -45,10 +60,14 @@ export async function executarLinha(linha: string, ctx: { usuario: string; papel
     return;
   }
 
+  // listar/consultar são leitura (qualquer papel de cadastro, inclusive auditor);
+  // criar/atualizar/remover exigem a permissão de escrita da entidade.
+  const leitura = parsed.subAcao === "listar" || parsed.subAcao === "consultar";
+
   const mapaAcoes: Record<string, { acao: Acao; handler: () => void }> = {
     usuario: {
       acao: "gerenciar_usuarios",
-      handler: () => executarUsuarios(parsed.opcoes, ctx),
+      handler: () => executarUsuarios(parsed.subAcao || "criar", parsed.opcoes, ctx),
     },
     parametro: {
       acao: "configurar_parametros",
@@ -58,19 +77,19 @@ export async function executarLinha(linha: string, ctx: { usuario: string; papel
       },
     },
     organizacao: {
-      acao: "cadastrar_organizacao",
-      handler: () => executarOrganizacoes(parsed.opcoes, ctx),
+      acao: leitura ? "consultar_cadastros" : "cadastrar_organizacao",
+      handler: () => executarOrganizacoes(parsed.subAcao || "", parsed.opcoes, ctx),
     },
     contrato: {
-      acao: "cadastrar_contrato",
-      handler: () => executarContratos(parsed.opcoes, ctx),
+      acao: leitura ? "consultar_cadastros" : "cadastrar_contrato",
+      handler: () => executarContratos(parsed.subAcao || "criar", parsed.opcoes, ctx),
     },
     lote: {
-      acao: "registrar_lote",
-      handler: () => executarLotes(parsed.opcoes, ctx),
+      acao: leitura ? "consultar_cadastros" : "registrar_lote",
+      handler: () => executarLotes(parsed.subAcao || "criar", parsed.opcoes, ctx),
     },
     equipamento: {
-      acao: "cadastrar_equipamento",
+      acao: leitura ? "consultar_cadastros" : "cadastrar_equipamento",
       handler: () => executarEquipamentos(parsed.subAcao || "criar", parsed.opcoes, ctx),
     },
     historico: {

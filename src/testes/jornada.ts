@@ -43,7 +43,7 @@ async function main(): Promise<void> {
 
   console.log("\n3) Cadastro de organização (CNPJ válido de teste)");
   const cnpjTeste = "11.222.333/0001-81";
-  executarOrganizacoes({ nome: "Recicla Tech LTDA", cnpj: cnpjTeste, tipo: "gerador" }, ctx);
+  executarOrganizacoes("criar", { nome: "Recicla Tech LTDA", cnpj: cnpjTeste, tipo: "gerador" }, ctx);
 
   // O ID é gerado por UUID dentro de FabricaEntidades — buscamos pelo CNPJ, que é único.
   const repoOrg = new Repositorio<Organizacao>(ARQ_ORGANIZACOES);
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
 
   console.log("\n4) Registro de lote");
   const nfTeste = "NF-TESTE-0001";
-  executarLotes({ org: organizacao.id, nf: nfTeste, transp: "TransRapida" }, ctx);
+  executarLotes("criar", { org: organizacao.id, nf: nfTeste, transp: "TransRapida" }, ctx);
 
   const repoLote = new Repositorio<Lote>(ARQ_LOTES);
   const lote = repoLote.carregar().map((l) => Lote.deJSON(l)).find((l) => l.notaFiscal === nfTeste);
