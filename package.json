@@ -10,8 +10,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "test": "ts-node tests/jornada.test.ts"
+    "test": "node scripts/testes.cjs"
   },
+
   "devDependencies": {
     "@types/node": "^20.14.0",
     "ts-node": "^10.9.2",

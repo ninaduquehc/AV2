@@ -60,9 +60,25 @@ export async function executarLinha(linha: string, ctx: { usuario: string; papel
     return;
   }
 
-  // listar/consultar são leitura (qualquer papel de cadastro, inclusive auditor);
-  // criar/atualizar/remover exigem a permissão de escrita da entidade.
-  const leitura = parsed.subAcao === "listar" || parsed.subAcao === "consultar";
+  // Leitura e escrita com permissões diferentes.
+  const leitura =
+    parsed.subAcao === "listar" || parsed.subAcao === "consultar";
+
+  const acaoEquipamento: Acao =
+    leitura
+      ? "consultar_cadastros"
+      : parsed.subAcao === "triar"
+        ? "concluir_triagem"
+        : parsed.subAcao === "desmonte"
+          ? "mover_desmonte"
+          : parsed.subAcao === "estado"
+            ? "alterar_estado"
+            : "cadastrar_equipamento";
+
+  const acaoRelatorio: Acao =
+    parsed.subAcao === "rastrear"
+      ? "rastrear_equipamento"
+      : "consultar_historico";
 
   const mapaAcoes: Record<string, { acao: Acao; handler: () => void }> = {
     usuario: {
@@ -77,8 +93,12 @@ export async function executarLinha(linha: string, ctx: { usuario: string; papel
       },
     },
     organizacao: {
-      acao: leitura ? "consultar_cadastros" : "cadastrar_organizacao",
-      handler: () => executarOrganizacoes(parsed.subAcao || "", parsed.opcoes, ctx),
+      acao:
+        parsed.subAcao === "listar" || parsed.subAcao === "consultar"
+          ? "consultar_cadastros"
+          : "cadastrar_organizacao",
+      handler: () =>
+        executarOrganizacoes(parsed.subAcao || "", parsed.opcoes, ctx),
     },
     contrato: {
       acao: leitura ? "consultar_cadastros" : "cadastrar_contrato",
@@ -88,19 +108,31 @@ export async function executarLinha(linha: string, ctx: { usuario: string; papel
       acao: leitura ? "consultar_cadastros" : "registrar_lote",
       handler: () => executarLotes(parsed.subAcao || "criar", parsed.opcoes, ctx),
     },
+
     equipamento: {
-      acao: leitura ? "consultar_cadastros" : "cadastrar_equipamento",
-      handler: () => executarEquipamentos(parsed.subAcao || "criar", parsed.opcoes, ctx),
+      acao: leitura
+        ? "consultar_cadastros"
+        : parsed.subAcao === "triar"
+          ? "concluir_triagem"
+          : parsed.subAcao === "desmonte"
+            ? "mover_desmonte"
+            : parsed.subAcao === "estado"
+              ? "alterar_estado"
+              : "cadastrar_equipamento",
+      handler: () =>
+        executarEquipamentos(parsed.subAcao || "criar", parsed.opcoes, ctx),
     },
+
     historico: {
       acao: "consultar_historico",
       handler: () => verificarEExibirHistorico(),
     },
     relatorio: {
-      acao: "gerar_relatorio",
+      acao: acaoRelatorio,
       handler: () => executarRelatorios(parsed.subAcao, parsed.opcoes),
     },
   };
+
 
   const item = mapaAcoes[parsed.acaoPrincipal];
   if (!item) {
