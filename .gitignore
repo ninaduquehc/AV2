@@ -1,5 +1,19 @@
-node_modules/
-dist/
 data/
 *.log
 .greencode-test-data/
+
+
+# Dependências e Builds
+node_modules/
+dist/
+
+# Logs e arquivos do Git/VSCode/Cursor
+.git/
+.vscode/
+
+# Configurações e Skills de Agentes/IA (Cursor, Claude, Devin, etc.)
+.agents/
+.claude/
+.cursor/
+.devin/
+.env

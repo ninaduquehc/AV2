@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Papéis de usuário para o RBAC
+enum Role {
+  ADMIN
+  OPERADOR
+  CLIENTE
+}
+
+// Status do Lote
+enum StatusLote {
+  RECEBIDO
+  EM_TRIAGEM
+  PROCESSADO
+  FINALIZADO
+}
+
+// Status do Equipamento
+enum StatusEquipamento {
+  RECEBIDO
+  EM_TRIAGEM
+  EM_MANUTENCAO
+  PRONTO_REUSO
+  RECICLAGEM
+  DESCARTE
+}
+
+// Modelo de Usuário (Autenticação e Auditoria)
+model Usuario {
+  id            String         @id @default(uuid())
+  nome          String
+  email         String         @unique
+  senha         String
+  role          Role           @default(OPERADOR)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  movimentacoes Movimentacao[]
+
+  @@map("usuarios")
+}
+
+// Modelo de Organização (Empresa Cliente)
+model Organizacao {
+  id        String    @id @default(uuid())
+  nome      String
+  cnpj      String    @unique
+  tipo      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  contrato  Contrato?
+  lotes     Lote[]
+
+  @@map("organizacoes")
+}
+
+// Modelo de Contrato
+model Contrato {
+  id             String      @id @default(uuid())
+  numeroContrato String      @unique
+  clausulas      Json
+  vigenciaInicio DateTime
+  vigenciaFim    DateTime
+  organizacaoId  String      @unique
+  organizacao    Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@map("contratos")
+}
+
+// Modelo de Lote de Equipamentos
+model Lote {
+  id              String        @id @default(uuid())
+  codigo          String        @unique
+  dataRecebimento DateTime      @default(now())
+  status          StatusLote    @default(RECEBIDO)
+  organizacaoId   String
+  organizacao     Organizacao   @relation(fields: [organizacaoId], references: [id])
+  equipamentos    Equipamento[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("lotes")
+}
+
+// Modelo de Equipamento
+model Equipamento {
+  id                  String            @id @default(uuid())
+  codigoBarrasInterno String            @unique
+  tipo                String
+  status              StatusEquipamento @default(RECEBIDO)
+  version             Int               @default(1) // Bloqueio otimista de concorrência
+  loteId              String
+  lote                Lote              @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  movimentacoes       Movimentacao[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("equipamentos")
+}
+
+// Modelo de Histórico de Movimentação do Equipamento
+model Movimentacao {
+  id            String            @id @default(uuid())
+  dataHora      DateTime          @default(now())
+  statusAnterior StatusEquipamento
+  statusNovo    StatusEquipamento
+  observacao    String?
+  equipamentoId String
+  equipamento   Equipamento       @relation(fields: [equipamentoId], references: [id], onDelete: Cascade)
+  usuarioId     String
+  usuario       Usuario           @relation(fields: [usuarioId], references: [id])
+
+  @@map("movimentacoes")
+}

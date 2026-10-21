@@ -1,18 +1,20 @@
-import { temPermissao, Acao } from "../auth/permissoes";
-import { parseLinhaComando } from "./parser";
-import { log } from "../utils/logger";
-import { comTratamento } from "../utils/tratamento";
-import { menuGuiadoExemplo } from "./guiado";
-import { exibirEasterEgg } from "./easteregg";
+import { temPermissao } from '../auth/permissoes.js';
+import { parseLinhaComando } from './parser.js';
+import { logger as log } from '../utils/logger.js';
+import { comTratamento } from '../utils/tratamento.js';
+import { menuGuiadoExemplo } from './guiado.js';
+import { exibirEasterEgg } from './easteregg.js';
 
-import { executarUsuarios } from "../commands/usuarios";
-import { executarOrganizacoes } from "../commands/organizacoes";
-import { executarContratos } from "../commands/contratos";
-import { executarLotes } from "../commands/lotes";
-import { executarEquipamentos } from "../commands/equipamentos";
-import { executarRelatorios } from "../commands/relatorios";
-import { executarParametros, visualizarParametros } from "../commands/parametros";
-import { verificarEExibirHistorico } from "../commands/historico";
+import { Acao } from '../auth/permissoes.js';
+
+import { executarUsuarios } from '../commands/usuarios.js';
+import { executarOrganizacoes } from '../commands/organizacoes.js';
+import { executarContratos } from '../commands/contratos.js';
+import { executarLotes } from '../commands/lotes.js';
+import { executarEquipamentos } from '../commands/equipamentos.js';
+import { executarRelatorios } from '../commands/relatorios.js';
+import { visualizarParametros, executarParametros } from '../commands/parametros.js';
+import { verificarEExibirHistorico } from '../commands/historico.js';
 
 export async function executarLinha(linha: string, ctx: { usuario: string; papel: string }): Promise<void> {
   const parsed = parseLinhaComando(linha);
@@ -132,7 +134,6 @@ export async function executarLinha(linha: string, ctx: { usuario: string; papel
       handler: () => executarRelatorios(parsed.subAcao, parsed.opcoes),
     },
   };
-
 
   const item = mapaAcoes[parsed.acaoPrincipal];
   if (!item) {
