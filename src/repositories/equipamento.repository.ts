@@ -37,4 +37,35 @@ export class EquipamentoRepository {
 
         return { total, page, limit, totalPages: Math.ceil(total / limit), data };
     }
+
+    // Atualização com bloqueio otimista
+    async updateWithVersion(
+        id: string,
+        currentVersion: number,
+        data: Prisma.EquipamentoUpdateInput,
+        tx?: Prisma.TransactionClient // Suporte para transações externas
+    ) {
+        const client = tx || prisma;
+
+        // Executa a atualização garantindo que o ID e a VERSÃO coincidem
+        const updated = await client.equipamento.updateMany({
+            where: {
+                id,
+                version: currentVersion,
+            },
+            data: {
+                ...data,
+                version: {
+                    increment: 1, // Incrementa a versão automaticamente
+                },
+            },
+        });
+
+        // Se count for 0, significa que o equipamento foi alterado por outro processo simultaneamente
+        if (updated.count === 0) {
+            throw new Error('CONCURRENCY_ERROR: O equipamento foi modificado por outro utilizador/processo. Tente novamente.');
+        }
+
+        return client.equipamento.findUnique({ where: { id } });
+    }
 }
