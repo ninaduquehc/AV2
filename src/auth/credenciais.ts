@@ -1,6 +1,6 @@
-import { ARQ_CREDENCIAIS } from "../config/caminhos";
-import { Repositorio } from "../persistence/repositorio";
-import { gerarSalt, gerarHash } from "./senha";
+import { ARQ_CREDENCIAIS } from "../config/caminhos.js";
+import { Repositorio } from "../persistence/repositorio.js";
+import { gerarSalt, gerarHash } from "./senha.js";
 
 export interface Credencial {
   usuario: string;

@@ -1,12 +1,12 @@
-import { Repositorio } from "../persistence/repositorio";
-import { Lote } from "../models/lote";
-import { Organizacao } from "../models/organizacao";
-import { Equipamento } from "../models/equipamento";
-import { FabricaEntidades } from "../models/fabrica";
-import { RegraDeNegocioError } from "../models/erros";
-import { ARQ_LOTES, ARQ_ORGANIZACOES, ARQ_EQUIPAMENTOS } from "../config/caminhos";
-import { log } from "../utils/logger";
-import { registrarTransacao } from "../persistence/journal";
+import { Repositorio } from "../persistence/repositorio.js";
+import { Lote } from "../models/lote.js";
+import { Organizacao } from "../models/organizacao.js";
+import { Equipamento } from "../models/equipamento.js";
+import { FabricaEntidades } from "../models/fabrica.js";
+import { RegraDeNegocioError } from "../models/erros.js";
+import { ARQ_LOTES, ARQ_ORGANIZACOES, ARQ_EQUIPAMENTOS } from "../config/caminhos.js";
+import { logger } from "../utils/logger.js";
+import { registrarTransacao } from "../persistence/journal.js";
 
 const repo = new Repositorio<Lote>(ARQ_LOTES);
 
@@ -27,12 +27,12 @@ function criarLote(opcoes: Record<string, string>, ctx: Contexto): void {
   const data = opcoes["data"] || new Date().toISOString().slice(0, 10);
 
   if (!org || !nf || !transp) {
-    log.erro("Uso: lote criar --org <ORG_ID> --nf <NOTA_FISCAL> --transp <TRANSPORTADORA> [--data AAAA-MM-DD]");
+    logger.erro("Uso: lote criar --org <ORG_ID> --nf <NOTA_FISCAL> --transp <TRANSPORTADORA> [--data AAAA-MM-DD]");
     return;
   }
 
   if (!organizacaoExiste(org)) {
-    log.erro(`Nenhuma organização encontrada com o ID '${org}'.`);
+    logger.erro(`Nenhuma organização encontrada com o ID '${org}'.`);
     return;
   }
 
@@ -40,7 +40,7 @@ function criarLote(opcoes: Record<string, string>, ctx: Contexto): void {
   repo.salvar([...carregarLotes(), lote]);
 
   registrarTransacao(ctx.usuario, "registrar_lote", { id: lote.id, org });
-  log.sucesso(`Lote registrado com sucesso! ID: ${lote.id}`);
+  logger.sucesso(`Lote registrado com sucesso! ID: ${lote.id}`);
 }
 
 function listarLotes(opcoes: Record<string, string>): void {
@@ -48,7 +48,7 @@ function listarLotes(opcoes: Record<string, string>): void {
   const lotes = carregarLotes().filter((l) => !org || l.organizacaoId === org);
 
   if (lotes.length === 0) {
-    log.info("Nenhum lote encontrado.");
+    logger.info("Nenhum lote encontrado.");
     return;
   }
 
@@ -63,13 +63,13 @@ function listarLotes(opcoes: Record<string, string>): void {
 function consultarLote(opcoes: Record<string, string>): void {
   const id = opcoes["id"]?.trim();
   if (!id) {
-    log.erro("Uso: lote consultar --id <LOTE_ID>");
+    logger.erro("Uso: lote consultar --id <LOTE_ID>");
     return;
   }
 
   const l = carregarLotes().find((item) => item.id === id);
   if (!l) {
-    log.erro(`Nenhum lote encontrado com o ID '${id}'.`);
+    logger.erro(`Nenhum lote encontrado com o ID '${id}'.`);
     return;
   }
 
@@ -90,7 +90,7 @@ function consultarLote(opcoes: Record<string, string>): void {
 function atualizarLote(opcoes: Record<string, string>, ctx: Contexto): void {
   const id = opcoes["id"]?.trim();
   if (!id) {
-    log.erro("Uso: lote atualizar --id <LOTE_ID> [--nf <NOTA_FISCAL>] [--transp <TRANSPORTADORA>] [--data AAAA-MM-DD]");
+    logger.erro("Uso: lote atualizar --id <LOTE_ID> [--nf <NOTA_FISCAL>] [--transp <TRANSPORTADORA>] [--data AAAA-MM-DD]");
     return;
   }
 
@@ -98,14 +98,14 @@ function atualizarLote(opcoes: Record<string, string>, ctx: Contexto): void {
   const transp = opcoes["transp"];
   const data = opcoes["data"];
   if (!nf && !transp && !data) {
-    log.erro("Informe ao menos um campo para atualizar (--nf, --transp ou --data).");
+    logger.erro("Informe ao menos um campo para atualizar (--nf, --transp ou --data).");
     return;
   }
 
   const lista = carregarLotes();
   const indice = lista.findIndex((l) => l.id === id);
   if (indice === -1) {
-    log.erro(`Nenhum lote encontrado com o ID '${id}'.`);
+    logger.erro(`Nenhum lote encontrado com o ID '${id}'.`);
     return;
   }
 
@@ -128,19 +128,19 @@ function atualizarLote(opcoes: Record<string, string>, ctx: Contexto): void {
 
   const campos = [nf && "nf", transp && "transp", data && "data"].filter(Boolean);
   registrarTransacao(ctx.usuario, "atualizar_lote", { id, campos });
-  log.sucesso(`Lote '${id}' atualizado com sucesso.`);
+  logger.sucesso(`Lote '${id}' atualizado com sucesso.`);
 }
 
 function removerLote(opcoes: Record<string, string>, ctx: Contexto): void {
   const id = opcoes["id"]?.trim();
   if (!id) {
-    log.erro("Uso: lote remover --id <LOTE_ID>");
+    logger.erro("Uso: lote remover --id <LOTE_ID>");
     return;
   }
 
   const lista = carregarLotes();
   if (!lista.some((l) => l.id === id)) {
-    log.erro(`Nenhum lote encontrado com o ID '${id}'.`);
+    logger.erro(`Nenhum lote encontrado com o ID '${id}'.`);
     return;
   }
 
@@ -152,7 +152,7 @@ function removerLote(opcoes: Record<string, string>, ctx: Contexto): void {
   repo.salvar(lista.filter((l) => l.id !== id));
 
   registrarTransacao(ctx.usuario, "remover_lote", { id });
-  log.sucesso(`Lote '${id}' removido com sucesso.`);
+  logger.sucesso(`Lote '${id}' removido com sucesso.`);
 }
 
 export function executarLotes(subAcao: string, opcoes: Record<string, string>, ctx: Contexto): void {
@@ -173,6 +173,6 @@ export function executarLotes(subAcao: string, opcoes: Record<string, string>, c
       removerLote(opcoes, ctx);
       break;
     default:
-      log.erro("Ação inválida. Use: lote criar | listar | consultar | atualizar | remover.");
+      logger.erro("Ação inválida. Use: lote criar | listar | consultar | atualizar | remover.");
   }
 }

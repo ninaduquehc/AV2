@@ -1,4 +1,4 @@
-import { temPermissao, Acao } from "../auth/permissoes";
+import { temPermissao, Acao } from "../auth/permissoes.js";
 
 const COMANDOS_MAPA: Record<string, Acao> = {
   usuario: "gerenciar_usuarios",

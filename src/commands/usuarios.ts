@@ -4,11 +4,11 @@ import {
   buscarCredencial,
   listarCredenciais,
   removerCredencial,
-} from "../auth/credenciais";
-import { PAPEIS_CRIAVEIS } from "../auth/papeis";
-import { RegraDeNegocioError } from "../models/erros";
-import { log } from "../utils/logger";
-import { registrarTransacao } from "../persistence/journal";
+} from "../auth/credenciais.js";
+import { PAPEIS_CRIAVEIS } from "../auth/papeis.js";
+import { RegraDeNegocioError } from "../models/erros.js";
+import { logger } from "../utils/logger.js";
+import { registrarTransacao } from "../persistence/journal.js";
 
 type Contexto = { usuario: string };
 
@@ -18,26 +18,26 @@ function criarUsuario(opcoes: Record<string, string>, ctx: Contexto): void {
   const papel = opcoes["papel"];
 
   if (!usuarioNovo || !senha || !papel) {
-    log.erro("Uso: usuario criar --usuario <NOME> --senha <SENHA> --papel <PAPEL>");
+    logger.erro("Uso: usuario criar --usuario <NOME> --senha <SENHA> --papel <PAPEL>");
     return;
   }
 
   if (!PAPEIS_CRIAVEIS.includes(papel)) {
-    log.erro(`Papel inválido. Opções válidas: ${PAPEIS_CRIAVEIS.join(", ")}`);
+    logger.erro(`Papel inválido. Opções válidas: ${PAPEIS_CRIAVEIS.join(", ")}`);
     return;
   }
 
   if (senha.length < 8) {
-    log.erro("A senha deve possuir pelo menos 8 caracteres.");
+    logger.erro("A senha deve possuir pelo menos 8 caracteres.");
     return;
   }
 
   const sucesso = adicionarCredencial(usuarioNovo, senha, papel);
   if (sucesso) {
     registrarTransacao(ctx.usuario, "criar_usuario", { usuarioNovo, papel });
-    log.sucesso(`Usuário '${usuarioNovo}' cadastrado com sucesso com papel '${papel}'.`);
+    logger.sucesso(`Usuário '${usuarioNovo}' cadastrado com sucesso com papel '${papel}'.`);
   } else {
-    log.erro("Usuário já existente no sistema.");
+    logger.erro("Usuário já existente no sistema.");
   }
 }
 
@@ -45,7 +45,7 @@ function listarUsuarios(): void {
   const usuarios = listarCredenciais();
 
   if (usuarios.length === 0) {
-    log.info("Nenhum usuário cadastrado.");
+    logger.info("Nenhum usuário cadastrado.");
     return;
   }
 
@@ -58,13 +58,13 @@ function listarUsuarios(): void {
 function consultarUsuario(opcoes: Record<string, string>): void {
   const nome = opcoes["usuario"]?.trim();
   if (!nome) {
-    log.erro("Uso: usuario consultar --usuario <NOME>");
+    logger.erro("Uso: usuario consultar --usuario <NOME>");
     return;
   }
 
   const u = buscarCredencial(nome);
   if (!u) {
-    log.erro(`Usuário '${nome}' não encontrado.`);
+    logger.erro(`Usuário '${nome}' não encontrado.`);
     return;
   }
 
@@ -79,23 +79,23 @@ function atualizarUsuario(opcoes: Record<string, string>, ctx: Contexto): void {
   const papel = opcoes["papel"];
 
   if (!nome) {
-    log.erro("Uso: usuario atualizar --usuario <NOME> [--senha <NOVA_SENHA>] [--papel <PAPEL>]");
+    logger.erro("Uso: usuario atualizar --usuario <NOME> [--senha <NOVA_SENHA>] [--papel <PAPEL>]");
     return;
   }
   if (!senha && !papel) {
-    log.erro("Informe ao menos um campo para atualizar (--senha ou --papel).");
+    logger.erro("Informe ao menos um campo para atualizar (--senha ou --papel).");
     return;
   }
 
   const alvo = buscarCredencial(nome);
   if (!alvo) {
-    log.erro(`Usuário '${nome}' não encontrado.`);
+    logger.erro(`Usuário '${nome}' não encontrado.`);
     return;
   }
 
   if (papel) {
     if (!PAPEIS_CRIAVEIS.includes(papel)) {
-      log.erro(`Papel inválido. Opções válidas: ${PAPEIS_CRIAVEIS.join(", ")}`);
+      logger.erro(`Papel inválido. Opções válidas: ${PAPEIS_CRIAVEIS.join(", ")}`);
       return;
     }
     if (alvo.papel === "administrador") {
@@ -104,7 +104,7 @@ function atualizarUsuario(opcoes: Record<string, string>, ctx: Contexto): void {
   }
 
   if (senha && senha.length < 8) {
-    log.erro("A senha deve possuir pelo menos 8 caracteres.");
+    logger.erro("A senha deve possuir pelo menos 8 caracteres.");
     return;
   }
 
@@ -113,19 +113,19 @@ function atualizarUsuario(opcoes: Record<string, string>, ctx: Contexto): void {
   // A senha nunca vai para o journal: só registramos quais campos mudaram.
   const campos = [senha && "senha", papel && "papel"].filter(Boolean);
   registrarTransacao(ctx.usuario, "atualizar_usuario", { usuarioAlvo: nome, campos });
-  log.sucesso(`Usuário '${nome}' atualizado com sucesso.`);
+  logger.sucesso(`Usuário '${nome}' atualizado com sucesso.`);
 }
 
 function removerUsuario(opcoes: Record<string, string>, ctx: Contexto): void {
   const nome = opcoes["usuario"]?.trim();
   if (!nome) {
-    log.erro("Uso: usuario remover --usuario <NOME>");
+    logger.erro("Uso: usuario remover --usuario <NOME>");
     return;
   }
 
   const alvo = buscarCredencial(nome);
   if (!alvo) {
-    log.erro(`Usuário '${nome}' não encontrado.`);
+    logger.erro(`Usuário '${nome}' não encontrado.`);
     return;
   }
 
@@ -139,7 +139,7 @@ function removerUsuario(opcoes: Record<string, string>, ctx: Contexto): void {
   removerCredencial(nome);
 
   registrarTransacao(ctx.usuario, "remover_usuario", { usuarioRemovido: nome });
-  log.sucesso(`Usuário '${nome}' removido com sucesso.`);
+  logger.sucesso(`Usuário '${nome}' removido com sucesso.`);
 }
 
 export function executarUsuarios(subAcao: string, opcoes: Record<string, string>, ctx: Contexto): void {
@@ -160,6 +160,6 @@ export function executarUsuarios(subAcao: string, opcoes: Record<string, string>
       removerUsuario(opcoes, ctx);
       break;
     default:
-      log.erro("Ação inválida. Use: usuario criar | listar | consultar | atualizar | remover.");
+      logger.erro("Ação inválida. Use: usuario criar | listar | consultar | atualizar | remover.");
   }
 }

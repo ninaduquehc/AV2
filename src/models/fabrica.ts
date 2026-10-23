@@ -1,8 +1,8 @@
 import * as crypto from "crypto";
-import { Organizacao } from "./organizacao";
-import { Contrato } from "./contrato";
-import { Lote } from "./lote";
-import { Equipamento, EstadoFisico } from "./equipamento";
+import { Organizacao } from "./organizacao.js";
+import { Contrato } from "./contrato.js";
+import { Lote } from "./lote.js";
+import { Equipamento, EstadoFisico } from "./equipamento.js";
 
 export class FabricaEntidades {
   public static criarOrganizacao(razosocial: string, cnpj: string, tipo: any): Organizacao {

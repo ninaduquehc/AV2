@@ -5,18 +5,18 @@ import {
   ARQ_CONTRATOS,
   ARQ_LOTES,
   ARQ_EQUIPAMENTOS,
-} from "../config/caminhos";
-import { provisionar } from "../config/provisionamento";
-import { autenticar } from "../auth/login";
-import { executarOrganizacoes } from "../commands/organizacoes";
-import { executarContratos } from "../commands/contratos";
-import { executarLotes } from "../commands/lotes";
-import { executarEquipamentos } from "../commands/equipamentos";
-import { executarUsuarios } from "../commands/usuarios";
-import { RegraDeNegocioError } from "../models/erros";
-import { Repositorio } from "../persistence/repositorio";
-import { verificarIntegridadeJournal } from "../persistence/journal";
-import { temPermissao } from "../auth/permissoes";
+} from "../config/caminhos.js";
+import { provisionar } from "../config/provisionamento.js";
+import { autenticar } from "../auth/login.js";
+import { executarOrganizacoes } from "../commands/organizacoes.js";
+import { executarContratos } from "../commands/contratos.js";
+import { executarLotes } from "../commands/lotes.js";
+import { executarEquipamentos } from "../commands/equipamentos.js";
+import { executarUsuarios } from "../commands/usuarios.js";
+import { RegraDeNegocioError } from "../models/erros.js";
+import { Repositorio } from "../persistence/repositorio.js";
+import { verificarIntegridadeJournal } from "../persistence/journal.js";
+import { temPermissao } from "../auth/permissoes.js";
 
 let passos = 0;
 let falhas = 0;

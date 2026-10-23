@@ -1,4 +1,4 @@
-import { perguntar } from "./entrada";
+import { perguntar } from "./entrada.js";
 
 export async function menuGuiadoExemplo(): Promise<void> {
   console.log("\n--- MENU GUIADO DE OPERAÇÃO ---");

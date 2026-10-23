@@ -1,10 +1,10 @@
-import { Repositorio } from "../persistence/repositorio";
-import { Contrato } from "../models/contrato";
-import { Organizacao } from "../models/organizacao";
-import { FabricaEntidades } from "../models/fabrica";
-import { ARQ_CONTRATOS, ARQ_ORGANIZACOES } from "../config/caminhos";
-import { log } from "../utils/logger";
-import { registrarTransacao } from "../persistence/journal";
+import { Repositorio } from "../persistence/repositorio.js";
+import { Contrato } from "../models/contrato.js";
+import { Organizacao } from "../models/organizacao.js";
+import { FabricaEntidades } from "../models/fabrica.js";
+import { ARQ_CONTRATOS, ARQ_ORGANIZACOES } from "../config/caminhos.js";
+import { logger } from "../utils/logger.js";
+import { registrarTransacao } from "../persistence/journal.js";
 
 const repo = new Repositorio<Contrato>(ARQ_CONTRATOS);
 
@@ -25,12 +25,12 @@ function criarContrato(opcoes: Record<string, string>, ctx: Contexto): void {
   const termos = opcoes["termos"] || "Termos padrão de logística reversa";
 
   if (!org || !inicio || !fim) {
-    log.erro("Uso: contrato criar --org <ORG_ID> --inicio <AAAA-MM-DD> --fim <AAAA-MM-DD> [--termos TEXTO]");
+    logger.erro("Uso: contrato criar --org <ORG_ID> --inicio <AAAA-MM-DD> --fim <AAAA-MM-DD> [--termos TEXTO]");
     return;
   }
 
   if (!organizacaoExiste(org)) {
-    log.erro(`Nenhuma organização encontrada com o ID '${org}'.`);
+    logger.erro(`Nenhuma organização encontrada com o ID '${org}'.`);
     return;
   }
 
@@ -38,7 +38,7 @@ function criarContrato(opcoes: Record<string, string>, ctx: Contexto): void {
   repo.salvar([...carregarContratos(), contrato]);
 
   registrarTransacao(ctx.usuario, "cadastrar_contrato", { id: contrato.id, organizacaoId: org });
-  log.sucesso(`Contrato cadastrado com sucesso! ID: ${contrato.id}`);
+  logger.sucesso(`Contrato cadastrado com sucesso! ID: ${contrato.id}`);
 }
 
 function listarContratos(opcoes: Record<string, string>): void {
@@ -46,7 +46,7 @@ function listarContratos(opcoes: Record<string, string>): void {
   const contratos = carregarContratos().filter((c) => !org || c.organizacaoId === org);
 
   if (contratos.length === 0) {
-    log.info("Nenhum contrato encontrado.");
+    logger.info("Nenhum contrato encontrado.");
     return;
   }
 
@@ -59,13 +59,13 @@ function listarContratos(opcoes: Record<string, string>): void {
 function consultarContrato(opcoes: Record<string, string>): void {
   const id = opcoes["id"]?.trim();
   if (!id) {
-    log.erro("Uso: contrato consultar --id <CONTRATO_ID>");
+    logger.erro("Uso: contrato consultar --id <CONTRATO_ID>");
     return;
   }
 
   const c = carregarContratos().find((item) => item.id === id);
   if (!c) {
-    log.erro(`Nenhum contrato encontrado com o ID '${id}'.`);
+    logger.erro(`Nenhum contrato encontrado com o ID '${id}'.`);
     return;
   }
 
@@ -81,20 +81,20 @@ function consultarContrato(opcoes: Record<string, string>): void {
 function atualizarContrato(opcoes: Record<string, string>, ctx: Contexto): void {
   const id = opcoes["id"]?.trim();
   if (!id) {
-    log.erro("Uso: contrato atualizar --id <CONTRATO_ID> [--inicio AAAA-MM-DD] [--fim AAAA-MM-DD] [--termos TEXTO]");
+    logger.erro("Uso: contrato atualizar --id <CONTRATO_ID> [--inicio AAAA-MM-DD] [--fim AAAA-MM-DD] [--termos TEXTO]");
     return;
   }
 
   const { inicio, fim, termos } = { inicio: opcoes["inicio"], fim: opcoes["fim"], termos: opcoes["termos"] };
   if (!inicio && !fim && !termos) {
-    log.erro("Informe ao menos um campo para atualizar (--inicio, --fim ou --termos).");
+    logger.erro("Informe ao menos um campo para atualizar (--inicio, --fim ou --termos).");
     return;
   }
 
   const lista = carregarContratos();
   const indice = lista.findIndex((c) => c.id === id);
   if (indice === -1) {
-    log.erro(`Nenhum contrato encontrado com o ID '${id}'.`);
+    logger.erro(`Nenum contrato encontrado com o ID '${id}'.`);
     return;
   }
 
@@ -114,26 +114,26 @@ function atualizarContrato(opcoes: Record<string, string>, ctx: Contexto): void 
 
   const campos = [inicio && "inicio", fim && "fim", termos && "termos"].filter(Boolean);
   registrarTransacao(ctx.usuario, "atualizar_contrato", { id, campos });
-  log.sucesso(`Contrato '${id}' atualizado com sucesso.`);
+  logger.sucesso(`Contrato '${id}' atualizado com sucesso.`);
 }
 
 function removerContrato(opcoes: Record<string, string>, ctx: Contexto): void {
   const id = opcoes["id"]?.trim();
   if (!id) {
-    log.erro("Uso: contrato remover --id <CONTRATO_ID>");
+    logger.erro("Uso: contrato remover --id <CONTRATO_ID>");
     return;
   }
 
   const lista = carregarContratos();
   if (!lista.some((c) => c.id === id)) {
-    log.erro(`Nenhum contrato encontrado com o ID '${id}'.`);
+    logger.erro(`Nenhum contrato encontrado com o ID '${id}'.`);
     return;
   }
 
   repo.salvar(lista.filter((c) => c.id !== id));
 
   registrarTransacao(ctx.usuario, "remover_contrato", { id });
-  log.sucesso(`Contrato '${id}' removido com sucesso.`);
+  logger.sucesso(`Contrato '${id}' removido com sucesso.`);
 }
 
 export function executarContratos(subAcao: string, opcoes: Record<string, string>, ctx: Contexto): void {
@@ -154,6 +154,6 @@ export function executarContratos(subAcao: string, opcoes: Record<string, string
       removerContrato(opcoes, ctx);
       break;
     default:
-      log.erro("Ação inválida. Use: contrato criar | listar | consultar | atualizar | remover.");
+      logger.erro("Ação inválida. Use: contrato criar | listar | consultar | atualizar | remover.");
   }
 }

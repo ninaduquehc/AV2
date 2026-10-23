@@ -1,9 +1,9 @@
 import * as fs from "fs";
 import * as crypto from "crypto";
-import { ARQ_CONFIG, ARQ_CREDENCIAIS } from "./caminhos";
-import { escreverAtomico } from "../persistence/armazenamento";
-import { registrarTransacao } from "../persistence/journal";
-import { adicionarCredencial } from "../auth/credenciais";
+import { ARQ_CONFIG, ARQ_CREDENCIAIS } from "./caminhos.js";
+import { escreverAtomico } from "../persistence/armazenamento.js";
+import { registrarTransacao } from "../persistence/journal.js";
+import { adicionarCredencial } from "../auth/credenciais.js";
 
 export interface ConfiguracaoMestre {
   chaveAes: string;

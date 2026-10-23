@@ -1,15 +1,15 @@
 import * as fs from "fs";
-import { DIR_DATA, ARQ_ORGANIZACOES, ARQ_LOTES } from "../config/caminhos";
-import { estaProvisionado, provisionar } from "../config/provisionamento";
-import { autenticar } from "../auth/login";
-import { executarOrganizacoes } from "../commands/organizacoes";
-import { executarLotes } from "../commands/lotes";
-import { executarEquipamentos } from "../commands/equipamentos";
-import { executarRelatorios } from "../commands/relatorios";
-import { verificarIntegridadeJournal } from "../persistence/journal";
-import { Repositorio } from "../persistence/repositorio";
-import { Organizacao } from "../models/organizacao";
-import { Lote } from "../models/lote";
+import { DIR_DATA, ARQ_ORGANIZACOES, ARQ_LOTES } from "../config/caminhos.js";
+import { estaProvisionado, provisionar } from "../config/provisionamento.js";
+import { autenticar } from "../auth/login.js";
+import { executarOrganizacoes } from "../commands/organizacoes.js";
+import { executarLotes } from "../commands/lotes.js";
+import { executarEquipamentos } from "../commands/equipamentos.js";
+import { executarRelatorios } from "../commands/relatorios.js";
+import { verificarIntegridadeJournal } from "../persistence/journal.js";
+import { Repositorio } from "../persistence/repositorio.js";
+import { Organizacao } from "../models/organizacao.js";
+import { Lote } from "../models/lote.js";
 
 let passos = 0;
 let falhas = 0;

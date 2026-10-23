@@ -1,13 +1,13 @@
 import * as crypto from "crypto";
-import { Repositorio } from "../persistence/repositorio";
-import { Equipamento, EstadoFisico, HIERARQUIA_ESTADO } from "../models/equipamento";
-import { Movimentacao } from "../models/movimentacao";
-import { Lote } from "../models/lote";
-import { FabricaEntidades } from "../models/fabrica";
-import { ARQ_EQUIPAMENTOS, ARQ_MOVIMENTACOES, ARQ_LOTES } from "../config/caminhos";
-import { log } from "../utils/logger";
-import { registrarTransacao } from "../persistence/journal";
-import { RegraDeNegocioError } from "../models/erros";
+import { Repositorio } from "../persistence/repositorio.js";
+import { Equipamento, EstadoFisico, HIERARQUIA_ESTADO } from "../models/equipamento.js";
+import { Movimentacao } from "../models/movimentacao.js";
+import { Lote } from "../models/lote.js";
+import { FabricaEntidades } from "../models/fabrica.js";
+import { ARQ_EQUIPAMENTOS, ARQ_MOVIMENTACOES, ARQ_LOTES } from "../config/caminhos.js";
+import { logger } from "../utils/logger.js";
+import { registrarTransacao } from "../persistence/journal.js";
+import { RegraDeNegocioError } from "../models/erros.js";
 
 const repoEq = new Repositorio<Equipamento>(ARQ_EQUIPAMENTOS);
 const repoMov = new Repositorio<Movimentacao>(ARQ_MOVIMENTACOES);
@@ -25,18 +25,18 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
     const estado = (opcoes["estado"] || "B_BOM") as EstadoFisico;
 
     if (!lote || !tipo || !modelo) {
-      log.erro("Uso: equipamento criar --lote <LOTE_ID> --tipo <TIPO> --modelo <MODELO> [--id COD_BARRAS] [--estado ESTADO]");
+      logger.erro("Uso: equipamento criar --lote <LOTE_ID> --tipo <TIPO> --modelo <MODELO> [--id COD_BARRAS] [--estado ESTADO]");
       return;
     }
 
     if (!new Repositorio<Lote>(ARQ_LOTES).carregar().some((l) => l.id === lote)) {
-      log.erro(`Nenhum lote encontrado com o ID '${lote}'.`);
+      logger.erro(`Nenhum lote encontrado com o ID '${lote}'.`);
       return;
     }
 
     const lista = repoEq.carregar();
     if (id && lista.some((e) => e.id === id)) {
-      log.erro("Já existe um equipamento cadastrado com esse código de barras.");
+      logger.erro("Já existe um equipamento cadastrado com esse código de barras.");
       return;
     }
 
@@ -45,18 +45,18 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
     repoEq.salvar(novaLista);
 
     registrarTransacao(ctx.usuario, "cadastrar_equipamento", { id: eq.id, loteId: lote });
-    log.sucesso(`Equipamento '${eq.id}' cadastrado com sucesso.`);
+    logger.sucesso(`Equipamento '${eq.id}' cadastrado com sucesso.`);
   } else if (subAcao === "triar") {
     const id = opcoes["id"];
     if (!id) {
-      log.erro("Uso: equipamento triar --id <COD_BARRAS>");
+      logger.erro("Uso: equipamento triar --id <COD_BARRAS>");
       return;
     }
 
     const lista = repoEq.carregar().map((e) => Equipamento.deJSON(e));
     const eq = lista.find((e) => e.id === id);
     if (!eq) {
-      log.erro("Equipamento não encontrado.");
+      logger.erro("Equipamento não encontrado.");
       return;
     }
 
@@ -65,18 +65,18 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
     repoEq.salvar(lista);
 
     registrarTransacao(ctx.usuario, "concluir_triagem", { id: eq.id });
-    log.sucesso(`Triagem do equipamento '${eq.id}' concluída com sucesso.`);
+    logger.sucesso(`Triagem do equipamento '${eq.id}' concluída com sucesso.`);
   } else if (subAcao === "desmonte") {
     const id = opcoes["id"];
     if (!id) {
-      log.erro("Uso: equipamento desmonte --id <COD_BARRAS>");
+      logger.erro("Uso: equipamento desmonte --id <COD_BARRAS>");
       return;
     }
 
     const lista = repoEq.carregar().map((e) => Equipamento.deJSON(e));
     const eq = lista.find((e) => e.id === id);
     if (!eq) {
-      log.erro("Equipamento não encontrado.");
+      logger.erro("Equipamento não encontrado.");
       return;
     }
 
@@ -93,21 +93,21 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
     repoMov.salvar(movs);
 
     registrarTransacao(ctx.usuario, "mover_desmonte", { id: eq.id });
-    log.sucesso(`Equipamento '${eq.id}' movido para desmonte.`);
+    logger.sucesso(`Equipamento '${eq.id}' movido para desmonte.`);
   } else if (subAcao === "estado") {
     const id = opcoes["id"];
     const novoEstado = opcoes["novo"] as EstadoFisico;
     const justificativa = opcoes["justificativa"];
 
     if (!id || !novoEstado) {
-      log.erro("Uso: equipamento estado --id <COD_BARRAS> --novo <NOVO_ESTADO> [--justificativa TEXTO]");
+      logger.erro("Uso: equipamento estado --id <COD_BARRAS> --novo <NOVO_ESTADO> [--justificativa TEXTO]");
       return;
     }
 
     const lista = repoEq.carregar().map((e) => Equipamento.deJSON(e));
     const eq = lista.find((e) => e.id === id);
     if (!eq) {
-      log.erro("Equipamento não encontrado.");
+      logger.erro("Equipamento não encontrado.");
       return;
     }
 
@@ -127,7 +127,7 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
     repoMov.salvar(movs);
 
     registrarTransacao(ctx.usuario, "alterar_estado", { id: eq.id, de: estadoAnterior, para: novoEstado });
-    log.sucesso(`Estado físico do equipamento '${eq.id}' alterado para ${novoEstado}.`);
+    logger.sucesso(`Estado físico do equipamento '${eq.id}' alterado para ${novoEstado}.`);
   } else if (subAcao === "listar") {
     const lote = opcoes["lote"]?.trim();
     const status = opcoes["status"]?.trim();
@@ -137,7 +137,7 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
       .filter((e) => (!lote || e.loteId === lote) && (!status || e.status === status));
 
     if (lista.length === 0) {
-      log.info("Nenhum equipamento encontrado.");
+      logger.info("Nenhum equipamento encontrado.");
       return;
     }
 
@@ -150,13 +150,13 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
   } else if (subAcao === "consultar") {
     const id = opcoes["id"]?.trim();
     if (!id) {
-      log.erro("Uso: equipamento consultar --id <COD_BARRAS>");
+      logger.erro("Uso: equipamento consultar --id <COD_BARRAS>");
       return;
     }
 
     const eq = repoEq.carregar().map((e) => Equipamento.deJSON(e)).find((e) => e.id === id);
     if (!eq) {
-      log.erro("Equipamento não encontrado.");
+      logger.erro("Equipamento não encontrado.");
       return;
     }
 
@@ -175,18 +175,18 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
     const modelo = opcoes["modelo"];
 
     if (!id) {
-      log.erro("Uso: equipamento atualizar --id <COD_BARRAS> [--tipo <TIPO>] [--modelo <MODELO>]");
+      logger.erro("Uso: equipamento atualizar --id <COD_BARRAS> [--tipo <TIPO>] [--modelo <MODELO>]");
       return;
     }
     if (!tipo && !modelo) {
-      log.erro("Informe ao menos um campo para atualizar (--tipo ou --modelo). Estado e status têm comandos próprios.");
+      logger.erro("Informe ao menos um campo para atualizar (--tipo ou --modelo). Estado e status têm comandos próprios.");
       return;
     }
 
     const lista = repoEq.carregar().map((e) => Equipamento.deJSON(e));
     const indice = lista.findIndex((e) => e.id === id);
     if (indice === -1) {
-      log.erro("Equipamento não encontrado.");
+      logger.erro("Equipamento não encontrado.");
       return;
     }
 
@@ -208,18 +208,18 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
 
     const campos = [tipo && "tipo", modelo && "modelo"].filter(Boolean);
     registrarTransacao(ctx.usuario, "atualizar_equipamento", { id, campos });
-    log.sucesso(`Equipamento '${id}' atualizado com sucesso.`);
+    logger.sucesso(`Equipamento '${id}' atualizado com sucesso.`);
   } else if (subAcao === "remover") {
     const id = opcoes["id"]?.trim();
     if (!id) {
-      log.erro("Uso: equipamento remover --id <COD_BARRAS>");
+      logger.erro("Uso: equipamento remover --id <COD_BARRAS>");
       return;
     }
 
     const lista = repoEq.carregar().map((e) => Equipamento.deJSON(e));
     const eq = lista.find((e) => e.id === id);
     if (!eq) {
-      log.erro("Equipamento não encontrado.");
+      logger.erro("Equipamento não encontrado.");
       return;
     }
 
@@ -235,8 +235,8 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
     repoEq.salvar(lista.filter((e) => e.id !== id));
 
     registrarTransacao(ctx.usuario, "remover_equipamento", { id });
-    log.sucesso(`Equipamento '${id}' removido com sucesso.`);
+    logger.sucesso(`Equipamento '${id}' removido com sucesso.`);
   } else {
-    log.erro("Ação inválida. Use: equipamento criar | listar | consultar | atualizar | remover | triar | desmonte | estado.");
+    logger.erro("Ação inválida. Use: equipamento criar | listar | consultar | atualizar | remover | triar | desmonte | estado.");
   }
 }

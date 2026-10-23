@@ -1,4 +1,4 @@
-import { escreverAtomico, lerAtomico } from "./armazenamento";
+import { escreverAtomico, lerAtomico } from "./armazenamento.js";
 
 export class Repositorio<T> {
   constructor(private caminhoArquivo: string) {}

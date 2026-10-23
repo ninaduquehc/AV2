@@ -1,12 +1,12 @@
-import { Repositorio } from "../persistence/repositorio";
-import { Organizacao, TipoOrganizacao } from "../models/organizacao";
-import { Contrato } from "../models/contrato";
-import { Lote } from "../models/lote";
-import { FabricaEntidades } from "../models/fabrica";
-import { RegraDeNegocioError } from "../models/erros";
-import { ARQ_ORGANIZACOES, ARQ_CONTRATOS, ARQ_LOTES } from "../config/caminhos";
-import { log } from "../utils/logger";
-import { registrarTransacao } from "../persistence/journal";
+import { Repositorio } from "../persistence/repositorio.js";
+import { Organizacao, TipoOrganizacao } from "../models/organizacao.js";
+import { Contrato } from "../models/contrato.js";
+import { Lote } from "../models/lote.js";
+import { FabricaEntidades } from "../models/fabrica.js";
+import { RegraDeNegocioError } from "../models/erros.js";
+import { ARQ_ORGANIZACOES, ARQ_CONTRATOS, ARQ_LOTES } from "../config/caminhos.js";
+import { logger } from "../utils/logger.js";
+import { registrarTransacao } from "../persistence/journal.js";
 
 const repo = new Repositorio<Organizacao>(ARQ_ORGANIZACOES);
 
@@ -24,7 +24,7 @@ function listarOrganizacoes(): void {
   const organizacoes = carregarOrganizacoes();
 
   if (organizacoes.length === 0) {
-    log.info("Nenhuma organização cadastrada.");
+    logger.info("Nenhuma organização cadastrada.");
     return;
   }
 
@@ -39,14 +39,14 @@ function listarOrganizacoes(): void {
 
 function consultarOrganizacao(id: string): void {
   if (!id?.trim()) {
-    log.erro("Uso: organizacao consultar --id <ORG_ID>");
+    logger.erro("Uso: organizacao consultar --id <ORG_ID>");
     return;
   }
 
   const organizacao = carregarOrganizacoes().find((org) => org.id === id.trim());
 
   if (!organizacao) {
-    log.erro(`Nenhuma organização encontrada com o ID '${id}'.`);
+    logger.erro(`Nenhuma organização encontrada com o ID '${id}'.`);
     return;
   }
 
@@ -64,7 +64,7 @@ function criarOrganizacao(opcoes: Record<string, string>, ctx: Contexto): void {
   const tipo = opcoes["tipo"] as TipoOrganizacao | undefined;
 
   if (!nome || !cnpj || !tipo) {
-    log.erro(
+    logger.erro(
       "Uso: organizacao criar --nome <RAZAO_SOCIAL> --cnpj <CNPJ> --tipo <gerador|operador_logistico|desmontadora|comprador>"
     );
     return;
@@ -73,7 +73,7 @@ function criarOrganizacao(opcoes: Record<string, string>, ctx: Contexto): void {
   const lista = carregarOrganizacoes();
 
   if (lista.some((org) => somenteDigitos(org.cnpj) === somenteDigitos(cnpj))) {
-    log.erro("Já existe uma organização cadastrada com este CNPJ.");
+    logger.erro("Já existe uma organização cadastrada com este CNPJ.");
     return;
   }
 
@@ -83,13 +83,13 @@ function criarOrganizacao(opcoes: Record<string, string>, ctx: Contexto): void {
 
   registrarTransacao(ctx.usuario, "cadastrar_organizacao", { id: org.id, cnpj: org.cnpj });
 
-  log.sucesso(`Organização '${org.razosocial}' criada com sucesso! ID: ${org.id}`);
+  logger.sucesso(`Organização '${org.razosocial}' criada com sucesso! ID: ${org.id}`);
 }
 
 function atualizarOrganizacao(opcoes: Record<string, string>, ctx: Contexto): void {
   const id = opcoes["id"]?.trim();
   if (!id) {
-    log.erro("Uso: organizacao atualizar --id <ORG_ID> [--nome <RAZAO_SOCIAL>] [--cnpj <CNPJ>] [--tipo <TIPO>]");
+    logger.erro("Uso: organizacao atualizar --id <ORG_ID> [--nome <RAZAO_SOCIAL>] [--cnpj <CNPJ>] [--tipo <TIPO>]");
     return;
   }
 
@@ -98,14 +98,14 @@ function atualizarOrganizacao(opcoes: Record<string, string>, ctx: Contexto): vo
   const novoTipo = opcoes["tipo"] as TipoOrganizacao | undefined;
 
   if (!novoNome && !novoCnpj && !novoTipo) {
-    log.erro("Informe ao menos um campo para atualizar (--nome, --cnpj ou --tipo).");
+    logger.erro("Informe ao menos um campo para atualizar (--nome, --cnpj ou --tipo).");
     return;
   }
 
   const lista = carregarOrganizacoes();
   const indice = lista.findIndex((org) => org.id === id);
   if (indice === -1) {
-    log.erro(`Nenhuma organização encontrada com o ID '${id}'.`);
+    logger.erro(`Nenhuma organização encontrada com o ID '${id}'.`);
     return;
   }
 
@@ -113,7 +113,7 @@ function atualizarOrganizacao(opcoes: Record<string, string>, ctx: Contexto): vo
   const cnpjFinal = novoCnpj ?? atual.cnpj;
 
   if (lista.some((org, i) => i !== indice && somenteDigitos(org.cnpj) === somenteDigitos(cnpjFinal))) {
-    log.erro("Já existe outra organização cadastrada com este CNPJ.");
+    logger.erro("Já existe outra organização cadastrada com este CNPJ.");
     return;
   }
 
@@ -131,19 +131,19 @@ function atualizarOrganizacao(opcoes: Record<string, string>, ctx: Contexto): vo
 
   const campos = [novoNome && "nome", novoCnpj && "cnpj", novoTipo && "tipo"].filter(Boolean);
   registrarTransacao(ctx.usuario, "atualizar_organizacao", { id, campos });
-  log.sucesso(`Organização '${id}' atualizada com sucesso.`);
+  logger.sucesso(`Organização '${id}' atualizada com sucesso.`);
 }
 
 function removerOrganizacao(opcoes: Record<string, string>, ctx: Contexto): void {
   const id = opcoes["id"]?.trim();
   if (!id) {
-    log.erro("Uso: organizacao remover --id <ORG_ID>");
+    logger.erro("Uso: organizacao remover --id <ORG_ID>");
     return;
   }
 
   const lista = carregarOrganizacoes();
   if (!lista.some((org) => org.id === id)) {
-    log.erro(`Nenhuma organização encontrada com o ID '${id}'.`);
+    logger.erro(`Nenhuma organização encontrada com o ID '${id}'.`);
     return;
   }
 
@@ -158,7 +158,7 @@ function removerOrganizacao(opcoes: Record<string, string>, ctx: Contexto): void
   repo.salvar(lista.filter((org) => org.id !== id));
 
   registrarTransacao(ctx.usuario, "remover_organizacao", { id });
-  log.sucesso(`Organização '${id}' removida com sucesso.`);
+  logger.sucesso(`Organização '${id}' removida com sucesso.`);
 }
 
 export function executarOrganizacoes(
@@ -183,6 +183,6 @@ export function executarOrganizacoes(
       removerOrganizacao(opcoes, ctx);
       break;
     default:
-      log.erro("Ação inválida. Use: organizacao criar | listar | consultar | atualizar | remover.");
+      logger.erro("Ação inválida. Use: organizacao criar | listar | consultar | atualizar | remover.");
   }
 }

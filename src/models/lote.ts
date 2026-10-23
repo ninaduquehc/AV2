@@ -1,6 +1,6 @@
-import { Entidade } from "./entidade";
-import { Validavel } from "./validavel";
-import { RegraDeNegocioError } from "./erros";
+import { Entidade } from "./entidade.js";
+import { Validavel } from "./validavel.js";
+import { RegraDeNegocioError } from "./erros.js";
 
 export class Lote extends Entidade implements Validavel {
   public id: string;

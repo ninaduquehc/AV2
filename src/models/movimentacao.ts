@@ -1,5 +1,5 @@
-import { Entidade } from "./entidade";
-import { EstadoFisico, StatusEquipamento } from "./equipamento";
+import { Entidade } from "./entidade.js";
+import { EstadoFisico, StatusEquipamento } from "./equipamento.js";
 
 export class Movimentacao extends Entidade {
   public id: string;

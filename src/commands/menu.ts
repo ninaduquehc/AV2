@@ -1,4 +1,4 @@
-import { Acao, temPermissao } from "../auth/permissoes";
+import { Acao, temPermissao } from "../auth/permissoes.js";
 
 export interface ItemMenu {
   opcao: string;

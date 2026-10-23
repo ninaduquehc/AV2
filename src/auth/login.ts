@@ -1,5 +1,5 @@
-import { verificarSenha } from "./senha";
-import { buscarCredencial } from "./credenciais";
+import { verificarSenha } from "./senha.js";
+import { buscarCredencial } from "./credenciais.js";
 
 export function autenticar(
   usuario: string,

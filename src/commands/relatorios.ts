@@ -1,9 +1,9 @@
-import { lerJournal } from "../persistence/journal";
-import { Repositorio } from "../persistence/repositorio";
-import { Equipamento } from "../models/equipamento";
-import { Movimentacao } from "../models/movimentacao";
-import { ARQ_EQUIPAMENTOS, ARQ_MOVIMENTACOES } from "../config/caminhos";
-import { log } from "../utils/logger";
+import { lerJournal } from "../persistence/journal.js";
+import { Repositorio } from "../persistence/repositorio.js";
+import { Equipamento } from "../models/equipamento.js";
+import { Movimentacao } from "../models/movimentacao.js";
+import { ARQ_EQUIPAMENTOS, ARQ_MOVIMENTACOES } from "../config/caminhos.js";
+import { logger } from "../utils/logger.js";
 
 export function executarRelatorios(subAcao: string, opcoes: Record<string, string>): void {
   if (subAcao === "journal") {
@@ -13,7 +13,7 @@ export function executarRelatorios(subAcao: string, opcoes: Record<string, strin
   } else if (subAcao === "rastrear") {
     const id = opcoes["id"];
     if (!id) {
-      log.erro("Uso: relatorio rastrear --id <COD_BARRAS>");
+      logger.erro("Uso: relatorio rastrear --id <COD_BARRAS>");
       return;
     }
 
@@ -22,7 +22,7 @@ export function executarRelatorios(subAcao: string, opcoes: Record<string, strin
 
     const eq = repoEq.carregar().map((e) => Equipamento.deJSON(e)).find((e) => e.id === id);
     if (!eq) {
-      log.erro("Equipamento não encontrado.");
+      logger.erro("Equipamento não encontrado.");
       return;
     }
 

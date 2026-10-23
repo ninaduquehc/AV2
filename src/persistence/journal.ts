@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
-import { ARQ_JOURNAL, DIR_DATA } from "../config/caminhos";
-import { criptografar, descriptografar } from "./armazenamento";
+import { ARQ_JOURNAL, DIR_DATA } from "../config/caminhos.js";
+import { criptografar, descriptografar } from "./armazenamento.js";
 
 const TAMANHO_MAXIMO_JOURNAL_BYTES = 10 * 1024 * 1024; // 10MB
 const RETENCAO_DIAS = 180;
@@ -101,6 +101,9 @@ export function registrarTransacao(usuario: string, acao: string, detalhes: Reco
   ultimoHash = completa.hashAtual;
 }
 
+// Alias exportado para resolver as chamadas 'registrarEventoJournal' dos demais arquivos
+export const registrarEventoJournal = registrarTransacao;
+
 export function lerJournal(): EntradaJournal[] {
   const registros = lerRegistros();
   const ilegiveis = registros.filter((r) => r === null).length;
@@ -109,6 +112,9 @@ export function lerJournal(): EntradaJournal[] {
   }
   return registros.filter((r): r is EntradaJournal => r !== null);
 }
+
+// Alias de leitura (caso algum arquivo importe lerEventosJournal)
+export const lerEventosJournal = lerJournal;
 
 // Retorna a posição do primeiro registro inválido, ou -1 se a cadeia está íntegra.
 export function verificarIntegridadeJournal(): number {

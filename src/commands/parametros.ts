@@ -1,7 +1,7 @@
-import { Repositorio } from "../persistence/repositorio";
-import { ARQ_PARAMETROS } from "../config/caminhos";
-import { log } from "../utils/logger";
-import { registrarTransacao } from "../persistence/journal";
+import { Repositorio } from "../persistence/repositorio.js";
+import { ARQ_PARAMETROS } from "../config/caminhos.js";
+import { logger } from "../utils/logger.js";
+import { registrarTransacao } from "../persistence/journal.js";
 
 export interface ParametrosGlobais {
   aliquotaImposto: number;
@@ -16,7 +16,7 @@ export function executarParametros(opcoes: Record<string, string>, ctx: { usuari
   const depreciacao = parseFloat(opcoes["depreciacao"]);
 
   if (isNaN(aliquota) || isNaN(depreciacao)) {
-    log.erro("Uso: parametro definir --aliquota <NUMERO> --depreciacao <NUMERO>");
+    logger.erro("Uso: parametro definir --aliquota <NUMERO> --depreciacao <NUMERO>");
     return;
   }
 
@@ -30,11 +30,11 @@ export function executarParametros(opcoes: Record<string, string>, ctx: { usuari
   registrarTransacao(ctx.usuario, "configurar_parametros", novosParametros);
 
   repo.salvar([novosParametros]);
-  log.sucesso(`Parâmetros globais definidos: Alíquota ${aliquota}% | Depreciação ${depreciacao}%.`);
+  logger.sucesso(`Parâmetros globais definidos: Alíquota ${aliquota}% | Depreciação ${depreciacao}%.`);
 }
 
 export function visualizarParametros(): void {
   const repo = new Repositorio<ParametrosGlobais>(ARQ_PARAMETROS);
   const atuais = repo.carregar()[0] ?? { aliquotaImposto: 0, coeficienteDepreciacao: 0, atualizadoEm: "—" };
-  log.info(`Alíquota de imposto: ${atuais.aliquotaImposto}% | Depreciação: ${atuais.coeficienteDepreciacao}% (atualizado em ${atuais.atualizadoEm})`);
+  logger.info(`Alíquota de imposto: ${atuais.aliquotaImposto}% | Depreciação: ${atuais.coeficienteDepreciacao}% (atualizado em ${atuais.atualizadoEm})`);
 }

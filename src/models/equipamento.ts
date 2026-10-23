@@ -1,6 +1,6 @@
-import { Entidade } from "./entidade";
-import { Validavel } from "./validavel";
-import { RegraDeNegocioError } from "./erros";
+import { Entidade } from "./entidade.js";
+import { Validavel } from "./validavel.js";
+import { RegraDeNegocioError } from "./erros.js";
 
 export type EstadoFisico = "A_EXCELENTE" | "B_BOM" | "C_REGULAR" | "D_DANIFICADO" | "E_SUCATA";
 export type StatusEquipamento = "recebido" | "triado" | "em_desmonte" | "recuperado" | "descartado";

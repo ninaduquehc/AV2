@@ -1,7 +1,7 @@
-import { Entidade } from "./entidade";
-import { Validavel } from "./validavel";
-import { cnpjValido } from "../utils/cnpj";
-import { RegraDeNegocioError } from "./erros";
+import { Entidade } from "./entidade.js";
+import { Validavel } from "./validavel.js";
+import { cnpjValido } from "../utils/cnpj.js";
+import { RegraDeNegocioError } from "./erros.js";
 
 export type TipoOrganizacao = "gerador" | "operador_logistico" | "desmontadora" | "comprador";
 

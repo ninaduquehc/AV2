@@ -1,8 +1,8 @@
 import * as readline from "readline";
 import * as path from "path";
 import * as fs from "fs";
-import { sessaoExpirada, registrarAtividade } from "../auth/sessao";
-import { DIR_DATA } from "../config/caminhos";
+import { sessaoExpirada, registrarAtividade } from "../auth/sessao.js";
+import { DIR_DATA } from "../config/caminhos.js";
 
 const ARQ_HISTORICO = path.join(DIR_DATA, "cli_history.txt");
 const LIMITE_HISTORICO = 200;

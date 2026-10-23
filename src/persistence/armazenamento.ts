@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
-import { ARQ_CONFIG } from "../config/caminhos";
+import { ARQ_CONFIG } from "../config/caminhos.js";
 
 function obterChaveAes(): Buffer {
   if (!fs.existsSync(ARQ_CONFIG)) {

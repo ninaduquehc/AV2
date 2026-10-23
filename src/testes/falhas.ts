@@ -1,14 +1,14 @@
 import * as fs from "fs";
-import { DIR_DATA, ARQ_ORGANIZACOES, ARQ_LOTES, ARQ_EQUIPAMENTOS } from "../config/caminhos";
-import { provisionar } from "../config/provisionamento";
-import { autenticar } from "../auth/login";
-import { executarOrganizacoes } from "../commands/organizacoes";
-import { executarLotes } from "../commands/lotes";
-import { executarEquipamentos } from "../commands/equipamentos";
-import { RegraDeNegocioError } from "../models/erros";
-import { Repositorio } from "../persistence/repositorio";
-import { Organizacao } from "../models/organizacao";
-import { Lote } from "../models/lote";
+import { DIR_DATA, ARQ_ORGANIZACOES, ARQ_LOTES, ARQ_EQUIPAMENTOS } from "../config/caminhos.js";
+import { provisionar } from "../config/provisionamento.js";
+import { autenticar } from "../auth/login.js";
+import { executarOrganizacoes } from "../commands/organizacoes.js";
+import { executarLotes } from "../commands/lotes.js";
+import { executarEquipamentos } from "../commands/equipamentos.js";
+import { RegraDeNegocioError } from "../models/erros.js";
+import { Repositorio } from "../persistence/repositorio.js";
+import { Organizacao } from "../models/organizacao.js";
+import { Lote } from "../models/lote.js";
 
 
 let passos = 0;
