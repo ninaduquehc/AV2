@@ -4,6 +4,8 @@ import jwt from '@fastify/jwt';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { authRoutes } from './routes/auth.routes.js';
+import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+import { appRoutes } from './routes/index.js';
 
 export const app = Fastify({
   logger: true,
@@ -16,6 +18,9 @@ await app.register(cors, { origin: true });
 await app.register(jwt, {
   secret: process.env.JWT_SECRET || 'fallback_secret',
 });
+
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
 
 // Registra Swagger (Geração da Documentação OpenAPI)
 await app.register(swagger, {
@@ -35,6 +40,7 @@ await app.register(swagger, {
       },
     },
   },
+  transform: jsonSchemaTransform,
 });
 
 await app.register(swaggerUi, {
@@ -43,6 +49,7 @@ await app.register(swaggerUi, {
 
 // Registra as rotas da API
 await app.register(authRoutes);
+await app.register(appRoutes);
 
 // Rota de verificação de saúde da aplicação (Healthcheck)
 app.get('/health', async () => {

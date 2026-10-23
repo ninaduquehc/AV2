@@ -17,3 +17,6 @@ dist/
 .cursor/
 .devin/
 .env
+
+# Arquivos de contexto local
+projeto_completo.txt
