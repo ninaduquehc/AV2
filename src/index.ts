@@ -23,20 +23,25 @@ async function principal() {
       logger.info("Sistema configurado. Prosseguindo para login...");
     }
 
-    const usuario = await perguntar("Usuário: ");
-    const senha = await perguntarSenha("Senha: ");
-    const resultado = autenticar(usuario, senha);
+    // Loop de login: repete até autenticar com sucesso
+    while (true) {
+      console.log("\n--- AUTENTICAÇÃO ---");
+      const usuario = await perguntar("Usuário: ");
+      const senha = await perguntarSenha("Senha: ");
+      const resultado = autenticar(usuario, senha);
 
-    if (resultado.autenticado && resultado.papel) {
-      logger.sucesso("Login realizado com sucesso.");
-      registrarAtividade();
+      if (resultado.autenticado && resultado.papel) {
+        logger.sucesso("Login realizado com sucesso.");
+        registrarAtividade();
 
-      // Entra direto no menu guiado
-      await menuGuiado({ usuario: usuario.trim(), papel: resultado.papel });
+        // Entra no menu guiado
+        await menuGuiado({ usuario: usuario.trim(), papel: resultado.papel });
 
-      logger.info("Sessão encerrada.");
-    } else {
-      logger.erro("Usuário ou senha inválidos.");
+        logger.info("Sessão encerrada.");
+        break; // Sai do loop ao encerrar o menu guiado
+      } else {
+        logger.erro("Usuário ou senha inválidos. Tente novamente.");
+      }
     }
   } catch (erro) {
     if (erro instanceof SessaoExpiradaError) {
