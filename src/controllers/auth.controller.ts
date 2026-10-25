@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import bcrypt from 'bcrypt';
-import { prisma } from '../config/prisma.js';
+import { prisma } from '../lib/prisma.js';
 
 export async function loginController(request: FastifyRequest, reply: FastifyReply) {
   const { email, senha } = request.body as { email?: string; senha?: string };
@@ -26,7 +26,7 @@ export async function loginController(request: FastifyRequest, reply: FastifyRep
   }
 
   // 3. Gera o Token JWT contendo o ID (sub) e a Role
-  const token = reply.jwtSign(
+  const token = await reply.jwtSign(
     { role: usuario.role },
     { sign: { sub: usuario.id, expiresIn: '8h' } }
   );

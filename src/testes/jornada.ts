@@ -1,4 +1,6 @@
+import "./ambiente.js";
 import * as fs from "fs";
+import * as os from "os";
 import { DIR_DATA, ARQ_ORGANIZACOES, ARQ_LOTES } from "../config/caminhos.js";
 import { estaProvisionado, provisionar } from "../config/provisionamento.js";
 import { autenticar } from "../auth/login.js";
@@ -26,6 +28,11 @@ function checar(descricao: string, condicao: boolean): void {
 async function main(): Promise<void> {
   console.log("=== Jornada completa: provisionamento -> rastreabilidade ===\n");
 
+  // Trava de segurança: o teste só apaga dados dentro da pasta temporária.
+  if (!DIR_DATA.startsWith(os.tmpdir())) {
+    throw new Error(`Teste recusado: DIR_DATA (${DIR_DATA}) está fora da pasta temporária.`);
+  }
+
   if (fs.existsSync(DIR_DATA)) fs.rmSync(DIR_DATA, { recursive: true, force: true });
 
   console.log("1) Provisionamento inicial");
@@ -45,9 +52,11 @@ async function main(): Promise<void> {
   const cnpjTeste = "11.222.333/0001-81";
   executarOrganizacoes("criar", { nome: "Recicla Tech LTDA", cnpj: cnpjTeste, tipo: "gerador" }, ctx);
 
-  // O ID é gerado por UUID dentro de FabricaEntidades — buscamos pelo CNPJ, que é único.
   const repoOrg = new Repositorio<Organizacao>(ARQ_ORGANIZACOES);
-  const organizacao = repoOrg.carregar().map((o) => Organizacao.deJSON(o)).find((o) => o.cnpj.replace(/\D/g, "") === cnpjTeste.replace(/\D/g, ""));
+  const organizacao = repoOrg
+    .carregar()
+    .map((o) => Organizacao.deJSON(o))
+    .find((o) => o.cnpj.replace(/\D/g, "") === cnpjTeste.replace(/\D/g, ""));
   checar("organização foi persistida e é encontrável pelo CNPJ", !!organizacao);
   if (!organizacao) return finalizar();
 

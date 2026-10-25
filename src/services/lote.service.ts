@@ -1,6 +1,7 @@
 import { LoteRepository } from '../repositories/lote.repository.js';
 import { OrganizacaoRepository } from '../repositories/organizacao.repository.js';
 import { StatusLote } from '@prisma/client';
+import { AppError } from '../models/erros.js';
 
 export class LoteService {
   constructor(
@@ -10,7 +11,7 @@ export class LoteService {
 
   async criar(data: { codigo: string; dataRecebimento?: Date; status: StatusLote; organizacaoId: string }) {
     const org = await this.orgRepo.findById(data.organizacaoId);
-    if (!org) throw new Error('Organização de origem não encontrada.');
+    if (!org) throw new AppError('Organização de origem não encontrada.', 404);
 
     return this.repo.create({
       codigo: data.codigo,
@@ -22,7 +23,7 @@ export class LoteService {
 
   async buscarPorId(id: string) {
     const lote = await this.repo.findById(id);
-    if (!lote) throw new Error('Lote não encontrado.');
+    if (!lote) throw new AppError('Lote não encontrado.', 404);
     return lote;
   }
 

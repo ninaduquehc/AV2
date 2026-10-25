@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { loginController } from '../controllers/auth.controller.js';
 
 export async function authRoutes(app: FastifyInstance) {
@@ -8,30 +9,21 @@ export async function authRoutes(app: FastifyInstance) {
       schema: {
         description: 'Autentica um usuário e retorna o token JWT',
         tags: ['Autenticação'],
-        body: {
-          type: 'object',
-          required: ['email', 'senha'],
-          properties: {
-            email: { type: 'string', format: 'email' },
-            senha: { type: 'string' },
-          },
-        },
+        security: [], // rota pública: não exige token
+        body: z.object({
+          email: z.string().email(),
+          senha: z.string().min(1),
+        }),
         response: {
-          200: {
-            type: 'object',
-            properties: {
-              token: { type: 'string' },
-              usuario: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string' },
-                  nome: { type: 'string' },
-                  email: { type: 'string' },
-                  role: { type: 'string' },
-                },
-              },
-            },
-          },
+          200: z.object({
+            token: z.string(),
+            usuario: z.object({
+              id: z.string(),
+              nome: z.string(),
+              email: z.string(),
+              role: z.string(),
+            }),
+          }),
         },
       },
     },

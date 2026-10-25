@@ -1,6 +1,7 @@
 import { EquipamentoRepository } from '../repositories/equipamento.repository.js';
 import { StatusEquipamento } from '@prisma/client';
 import { LoteRepository } from '../repositories/lote.repository.js';
+import { AppError } from '../models/erros.js';
 
 export class EquipamentoService {
   constructor(
@@ -10,17 +11,17 @@ export class EquipamentoService {
 
   async criar(data: { codigoBarrasInterno: string; tipo: string; status: StatusEquipamento; loteId: string }) {
     const lote = await this.loteRepo.findById(data.loteId);
-    if (!lote) throw new Error('Lote especificado não encontrado.');
+    if (!lote) throw new AppError('Lote especificado não encontrado.', 404);
 
     const existe = await this.repo.findByCodigoBarras(data.codigoBarrasInterno);
-    if (existe) throw new Error('Código de barras já cadastrado.');
+    if (existe) throw new AppError('Código de barras já cadastrado.', 409);
 
     return this.repo.create(data);
   }
 
   async buscarPorId(id: string) {
     const eq = await this.repo.findById(id);
-    if (!eq) throw new Error('Equipamento não encontrado.');
+    if (!eq) throw new AppError('Equipamento não encontrado.', 404);
     return eq;
   }
 

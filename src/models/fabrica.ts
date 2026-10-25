@@ -1,11 +1,11 @@
 import * as crypto from "crypto";
-import { Organizacao } from "./organizacao.js";
+import { Organizacao, TipoOrganizacao } from "./organizacao.js";
 import { Contrato } from "./contrato.js";
 import { Lote } from "./lote.js";
 import { Equipamento, EstadoFisico } from "./equipamento.js";
 
 export class FabricaEntidades {
-  public static criarOrganizacao(razosocial: string, cnpj: string, tipo: any): Organizacao {
+  public static criarOrganizacao(razosocial: string, cnpj: string, tipo: TipoOrganizacao): Organizacao {
     const id = `ORG-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
     const org = new Organizacao(id, razosocial, cnpj, tipo);
     org.validar();

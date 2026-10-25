@@ -1,4 +1,6 @@
+import "./ambiente.js";
 import * as fs from "fs";
+import * as os from "os";
 import {
   DIR_DATA,
   ARQ_ORGANIZACOES,
@@ -46,6 +48,11 @@ function barrada(operacao: () => void): boolean {
 
 async function main(): Promise<void> {
   console.log("=== CRUD completo de todas as entidades ===\n");
+
+  // Trava de segurança: o teste só apaga dados dentro da pasta temporária.
+  if (!DIR_DATA.startsWith(os.tmpdir())) {
+    throw new Error(`Teste recusado: DIR_DATA (${DIR_DATA}) está fora da pasta temporária.`);
+  }
 
   if (fs.existsSync(DIR_DATA)) fs.rmSync(DIR_DATA, { recursive: true, force: true });
   provisionar("SenhaAdmin123");

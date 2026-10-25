@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { OrganizacaoService } from '../services/organizacao.service.js';
+import { responderErro } from '../utils/http.js';
 
 export class OrganizacaoController {
   constructor(private service = new OrganizacaoService()) {}
@@ -9,14 +10,18 @@ export class OrganizacaoController {
       const body = req.body as { nome: string; cnpj: string; tipo: string };
       const result = await this.service.criar(body);
       return reply.status(201).send(result);
-    } catch (err: any) {
-      return reply.status(400).send({ error: err.message });
+    } catch (err) {
+      return responderErro(reply, err);
     }
   }
 
   async index(req: FastifyRequest, reply: FastifyReply) {
-    const list = await this.service.listarTodas();
-    return reply.send(list);
+    try {
+      const list = await this.service.listarTodas();
+      return reply.send(list);
+    } catch (err) {
+      return responderErro(reply, err);
+    }
   }
 
   async show(req: FastifyRequest, reply: FastifyReply) {
@@ -24,8 +29,8 @@ export class OrganizacaoController {
       const { id } = req.params as { id: string };
       const org = await this.service.buscarPorId(id);
       return reply.send(org);
-    } catch (err: any) {
-      return reply.status(404).send({ error: err.message });
+    } catch (err) {
+      return responderErro(reply, err);
     }
   }
 }

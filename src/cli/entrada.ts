@@ -1,12 +1,5 @@
 import * as readline from "readline";
-import * as path from "path";
-import * as fs from "fs";
-import { sessaoExpirada, registrarAtividade } from "../auth/sessao.js";
-import { DIR_DATA } from "../config/caminhos.js";
-
-const ARQ_HISTORICO = path.join(DIR_DATA, "cli_history.txt");
-const LIMITE_HISTORICO = 200;
-const PADRAO_SENSIVEL = /--senha\b/i;
+import { Writable } from "stream";
 
 export class SessaoExpiradaError extends Error {
   constructor() {
@@ -14,27 +7,20 @@ export class SessaoExpiradaError extends Error {
   }
 }
 
-function carregarHistorico(): string[] {
-  try {
-    return fs
-      .readFileSync(ARQ_HISTORICO, "utf-8")
-      .split("\n")
-      .filter((l) => l.trim() !== "");
-  } catch {
-    return [];
-  }
-}
+let mudo = false;
 
-let historico: string[] = carregarHistorico(); // do mais antigo ao mais novo
-let completadorAtual: (line: string) => [string[], string] = () => [[], ""];
+// Escreve normalmente, exceto quando uma senha está sendo digitada.
+const saida = new Writable({
+  write(chunk, encoding, callback) {
+    if (!mudo) process.stdout.write(chunk, encoding);
+    callback();
+  },
+});
 
 export const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout,
-  history: [...historico].reverse(), // readline espera o mais recente primeiro
-  historySize: LIMITE_HISTORICO,
-  removeHistoryDuplicates: true,
-  completer: (line: string) => completadorAtual(line),
+  output: saida,
+  terminal: true,
 });
 
 rl.on("SIGINT", () => {
@@ -42,52 +28,19 @@ rl.on("SIGINT", () => {
   process.exit(0);
 });
 
-export function definirCompletador(fn: (line: string) => [string[], string]): void {
-  completadorAtual = fn;
-}
-
-function lerLinha(promptTexto: string): Promise<string> {
+export function perguntar(promptTexto: string): Promise<string> {
   return new Promise((resolve) => rl.question(promptTexto, resolve));
 }
 
-function removerDoHistoricoEmMemoria(linha: string): void {
-  const h = (rl as any).history;
-  if (Array.isArray(h) && h[0] === linha) h.shift();
-}
-
-// Respostas a perguntas (senha de login, etc.) nunca ficam no histórico.
-export async function perguntar(promptTexto: string): Promise<string> {
-  const resposta = await lerLinha(promptTexto);
-  removerDoHistoricoEmMemoria(resposta);
-  return resposta;
-}
-
-export async function lerComando(promptTexto: string): Promise<string> {
-  const resposta = await lerLinha(promptTexto);
-
-  if (sessaoExpirada()) throw new SessaoExpiradaError();
-  registrarAtividade();
-
-  if (PADRAO_SENSIVEL.test(resposta)) {
-    removerDoHistoricoEmMemoria(resposta);
-  } else {
-    salvarHistorico(resposta);
-  }
-  return resposta;
-}
-
-function salvarHistorico(comando: string): void {
-  const limpo = comando.trim();
-  if (!limpo) return;
-
-  historico = historico.filter((l) => l !== limpo);
-  historico.push(limpo);
-  historico = historico.slice(-LIMITE_HISTORICO);
-
-  try {
-    fs.mkdirSync(DIR_DATA, { recursive: true });
-    fs.writeFileSync(ARQ_HISTORICO, historico.join("\n") + "\n", "utf-8");
-  } catch {
-    // Histórico é conveniência: falha ao gravar não derruba o programa.
-  }
+// Mostra o prompt, mas não exibe o que é digitado.
+export function perguntarSenha(promptTexto: string): Promise<string> {
+  return new Promise((resolve) => {
+    process.stdout.write(promptTexto);
+    mudo = true;
+    rl.question("", (resposta) => {
+      mudo = false;
+      process.stdout.write("\n");
+      resolve(resposta);
+    });
+  });
 }

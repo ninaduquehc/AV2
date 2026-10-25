@@ -7,22 +7,23 @@ import { authRoutes } from './routes/auth.routes.js';
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { appRoutes } from './routes/index.js';
 
+if (!process.env.JWT_SECRET) {
+  throw new Error('FATAL: A variável de ambiente JWT_SECRET é obrigatória e não foi configurada no .env');
+}
+
 export const app = Fastify({
   logger: true,
 });
 
-// Registra CORS para permitir requisições de clientes web
 await app.register(cors, { origin: true });
 
-// Registra autenticação JWT
 await app.register(jwt, {
-  secret: process.env.JWT_SECRET || 'fallback_secret',
+  secret: process.env.JWT_SECRET,
 });
 
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-// Registra Swagger (Geração da Documentação OpenAPI)
 await app.register(swagger, {
   openapi: {
     info: {
@@ -39,6 +40,7 @@ await app.register(swagger, {
         },
       },
     },
+    security: [{ bearerAuth: [] }],
   },
   transform: jsonSchemaTransform,
 });
@@ -47,11 +49,11 @@ await app.register(swaggerUi, {
   routePrefix: '/docs',
 });
 
-// Registra as rotas da API
 await app.register(authRoutes);
 await app.register(appRoutes);
 
-// Rota de verificação de saúde da aplicação (Healthcheck)
-app.get('/health', async () => {
+app.get('/health', {
+  schema: { security: [] },
+}, async () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });

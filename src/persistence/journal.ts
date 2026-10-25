@@ -101,9 +101,6 @@ export function registrarTransacao(usuario: string, acao: string, detalhes: Reco
   ultimoHash = completa.hashAtual;
 }
 
-// Alias exportado para resolver as chamadas 'registrarEventoJournal' dos demais arquivos
-export const registrarEventoJournal = registrarTransacao;
-
 export function lerJournal(): EntradaJournal[] {
   const registros = lerRegistros();
   const ilegiveis = registros.filter((r) => r === null).length;
@@ -112,9 +109,6 @@ export function lerJournal(): EntradaJournal[] {
   }
   return registros.filter((r): r is EntradaJournal => r !== null);
 }
-
-// Alias de leitura (caso algum arquivo importe lerEventosJournal)
-export const lerEventosJournal = lerJournal;
 
 // Retorna a posição do primeiro registro inválido, ou -1 se a cadeia está íntegra.
 export function verificarIntegridadeJournal(): number {

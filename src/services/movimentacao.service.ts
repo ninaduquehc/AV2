@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma.js';
 import { MovimentacaoRepository } from '../repositories/movimentacao.repository.js';
 import { EquipamentoRepository } from '../repositories/equipamento.repository.js';
 import { StatusEquipamento } from '@prisma/client';
+import { AppError } from '../models/erros.js';
 
 export class MovimentacaoService {
   constructor(
@@ -9,52 +10,52 @@ export class MovimentacaoService {
     private eqRepo = new EquipamentoRepository()
   ) {}
 
-  // Movimentação individual com $transaction e bloqueio otimista
+  // Movimentação individual: o cliente envia a versão que viu.
   async registrarMovimentacao(data: {
     equipamentoId: string;
     usuarioId: string;
     statusNovo: StatusEquipamento;
+    version: number;
     observacao?: string;
   }) {
     return prisma.$transaction(async (tx) => {
-      // 1. Busca o equipamento para obter o status atual e a versão
       const equipamento = await tx.equipamento.findUnique({
         where: { id: data.equipamentoId },
       });
 
       if (!equipamento) {
-        throw new Error('Equipamento não encontrado.');
+        throw new AppError('Equipamento não encontrado.', 404);
       }
 
-      const statusAnterior = equipamento.status;
+      if (equipamento.status === data.statusNovo) {
+        throw new AppError('O equipamento já está neste status.', 422);
+      }
 
-      // 2. Atualiza o equipamento com verificação de versão (bloqueio otimista)
+      // O update só acontece se a versão enviada ainda for a atual.
       await this.eqRepo.updateWithVersion(
         equipamento.id,
-        equipamento.version,
+        data.version,
         { status: data.statusNovo },
         tx
       );
 
-      // 3. Regista o histórico de movimentação
-      const movimentacao = await tx.movimentacao.create({
+      return tx.movimentacao.create({
         data: {
           dataHora: new Date(),
           equipamentoId: data.equipamentoId,
           usuarioId: data.usuarioId,
-          statusAnterior,
+          statusAnterior: equipamento.status,
           statusNovo: data.statusNovo,
           observacao: data.observacao,
         },
       });
-
-      return movimentacao;
     });
   }
 
-  // Movimentação em massa (Batch) para múltiplos equipamentos
+  // Movimentação em massa: cada item traz a versão que o cliente viu.
+  // Tudo ou nada: se um item falhar, a transação inteira é desfeita.
   async registrarMovimentacaoEmMassa(data: {
-    equipamentosIds: string[];
+    itens: { equipamentoId: string; version: number }[];
     usuarioId: string;
     statusNovo: StatusEquipamento;
     observacao?: string;
@@ -62,29 +63,32 @@ export class MovimentacaoService {
     return prisma.$transaction(async (tx) => {
       const resultados = [];
 
-      for (const id of data.equipamentosIds) {
-        const equipamento = await tx.equipamento.findUnique({ where: { id } });
+      for (const item of data.itens) {
+        const equipamento = await tx.equipamento.findUnique({
+          where: { id: item.equipamentoId },
+        });
+
         if (!equipamento) {
-          throw new Error(`Equipamento ID ${id} não foi encontrado.`);
+          throw new AppError(`Equipamento ${item.equipamentoId} não foi encontrado.`, 404);
         }
 
-        const statusAnterior = equipamento.status;
+        if (equipamento.status === data.statusNovo) {
+          throw new AppError(`O equipamento ${item.equipamentoId} já está neste status.`, 422);
+        }
 
-        // Atualiza a versão e estado
         await this.eqRepo.updateWithVersion(
           equipamento.id,
-          equipamento.version,
+          item.version,
           { status: data.statusNovo },
           tx
         );
 
-        // Regista a movimentação
         const mov = await tx.movimentacao.create({
           data: {
             dataHora: new Date(),
-            equipamentoId: id,
+            equipamentoId: item.equipamentoId,
             usuarioId: data.usuarioId,
-            statusAnterior,
+            statusAnterior: equipamento.status,
             statusNovo: data.statusNovo,
             observacao: data.observacao || 'Movimentação em lote/massa',
           },
@@ -98,6 +102,8 @@ export class MovimentacaoService {
   }
 
   async obterRastreabilidade(equipamentoId: string) {
+    const equipamento = await this.eqRepo.findById(equipamentoId);
+    if (!equipamento) throw new AppError('Equipamento não encontrado.', 404);
     return this.repo.findByEquipamentoId(equipamentoId);
   }
 }

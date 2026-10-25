@@ -5,6 +5,14 @@ import { RegraDeNegocioError } from "./erros.js";
 export type EstadoFisico = "A_EXCELENTE" | "B_BOM" | "C_REGULAR" | "D_DANIFICADO" | "E_SUCATA";
 export type StatusEquipamento = "recebido" | "triado" | "em_desmonte" | "recuperado" | "descartado";
 
+export const ESTADOS_FISICOS_VALIDOS: EstadoFisico[] = [
+  "A_EXCELENTE",
+  "B_BOM",
+  "C_REGULAR",
+  "D_DANIFICADO",
+  "E_SUCATA"
+];
+
 export const HIERARQUIA_ESTADO: Record<EstadoFisico, number> = {
   A_EXCELENTE: 5,
   B_BOM: 4,
@@ -44,7 +52,7 @@ export class Equipamento extends Entidade implements Validavel {
 
   public validar(): boolean {
     if (!HIERARQUIA_ESTADO[this.estadoFisico]) {
-      throw new RegraDeNegocioError(`Estado físico '${this.estadoFisico}' inválido. Opções válidas: ${Object.keys(HIERARQUIA_ESTADO).join(", ")}`);
+      throw new RegraDeNegocioError(`Estado físico '${this.estadoFisico}' inválido. Opções válidas: ${ESTADOS_FISICOS_VALIDOS.join(", ")}`);
     }
 
     if (!this.id || this.id.trim().length === 0) {

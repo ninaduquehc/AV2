@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { app } from './app.js';
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -18,7 +19,7 @@ async function start() {
 const signals = ['SIGINT', 'SIGTERM'];
 signals.forEach((signal) => {
   process.on(signal, async () => {
-    console.log(`\nSinal ${signal} recebido. Encerrando o servidor com segurança...`);
+    console.log('\nSinal ' + signal + ' recebido. Encerrando o servidor com segurança...');
     await app.close();
     console.log('Servidor encerrado.');
     process.exit(0);

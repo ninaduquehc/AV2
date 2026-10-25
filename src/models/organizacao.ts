@@ -5,6 +5,13 @@ import { RegraDeNegocioError } from "./erros.js";
 
 export type TipoOrganizacao = "gerador" | "operador_logistico" | "desmontadora" | "comprador";
 
+export const TIPOS_ORGANIZACAO_VALIDOS: TipoOrganizacao[] = [
+  "gerador",
+  "operador_logistico",
+  "desmontadora",
+  "comprador"
+];
+
 export class Organizacao extends Entidade implements Validavel {
   public id: string;
   public razosocial: string;
@@ -30,9 +37,8 @@ export class Organizacao extends Entidade implements Validavel {
   }
 
   public validar(): boolean {
-    const tiposValidos: TipoOrganizacao[] = ["gerador", "operador_logistico", "desmontadora", "comprador"];
-    if (!tiposValidos.includes(this.tipo)) {
-      throw new RegraDeNegocioError(`Tipo de organização '${this.tipo}' inválido. Opções: ${tiposValidos.join(", ")}`);
+    if (!TIPOS_ORGANIZACAO_VALIDOS.includes(this.tipo)) {
+      throw new RegraDeNegocioError(`Tipo de organização '${this.tipo}' inválido. Opções: ${TIPOS_ORGANIZACAO_VALIDOS.join(", ")}`);
     }
 
     if (!this.razosocial || this.razosocial.trim().length < 3) {

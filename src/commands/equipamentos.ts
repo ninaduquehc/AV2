@@ -60,9 +60,15 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
       return;
     }
 
+    const statusAnterior = eq.status;
     eq.triagemConcluida = true;
     eq.status = "triado";
     repoEq.salvar(lista);
+
+    // Registra movimentação de triagem no histórico
+    const movs = repoMov.carregar().map((m) => Movimentacao.deJSON(m));
+    movs.push(new Movimentacao(novoIdMovimentacao(), eq.id, ctx.usuario, statusAnterior, "triado", eq.estadoFisico, eq.estadoFisico));
+    repoMov.salvar(movs);
 
     registrarTransacao(ctx.usuario, "concluir_triagem", { id: eq.id });
     logger.sucesso(`Triagem do equipamento '${eq.id}' concluída com sucesso.`);
@@ -101,6 +107,12 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
 
     if (!id || !novoEstado) {
       logger.erro("Uso: equipamento estado --id <COD_BARRAS> --novo <NOVO_ESTADO> [--justificativa TEXTO]");
+      return;
+    }
+
+    // Validação estrita do estado informado contra a hierarquia permitida
+    if (!(novoEstado in HIERARQUIA_ESTADO)) {
+      logger.erro(`Estado físico '${novoEstado}' é inválido. Estados válidos: ${Object.keys(HIERARQUIA_ESTADO).join(" | ")}`);
       return;
     }
 
@@ -223,8 +235,6 @@ export function executarEquipamentos(subAcao: string, opcoes: Record<string, str
       return;
     }
 
-    // Movimentações são trilha de auditoria imutável: equipamento que já
-    // passou por etapas do processo não pode sumir do sistema.
     const temMovimentacoes = repoMov.carregar().some((m) => m.equipamentoId === id);
     if (eq.status !== "recebido" || eq.triagemConcluida || temMovimentacoes) {
       throw new RegraDeNegocioError(

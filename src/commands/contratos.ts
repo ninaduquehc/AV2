@@ -94,7 +94,7 @@ function atualizarContrato(opcoes: Record<string, string>, ctx: Contexto): void 
   const lista = carregarContratos();
   const indice = lista.findIndex((c) => c.id === id);
   if (indice === -1) {
-    logger.erro(`Nenum contrato encontrado com o ID '${id}'.`);
+    logger.erro(`Nenhum contrato encontrado com o ID '${id}'.`);
     return;
   }
 

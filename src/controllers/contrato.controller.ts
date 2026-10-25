@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { ContratoService } from '../services/contrato.service.js';
+import { responderErro } from '../utils/http.js';
 
 export class ContratoController {
   constructor(private service = new ContratoService()) {}
@@ -13,13 +14,17 @@ export class ContratoController {
         vigenciaFim: new Date(body.vigenciaFim),
       });
       return reply.status(201).send(result);
-    } catch (err: any) {
-      return reply.status(400).send({ error: err.message });
+    } catch (err) {
+      return responderErro(reply, err);
     }
   }
 
   async index(req: FastifyRequest, reply: FastifyReply) {
-    const result = await this.service.listarTodos();
-    return reply.send(result);
+    try {
+      const result = await this.service.listarTodos();
+      return reply.send(result);
+    } catch (err) {
+      return responderErro(reply, err);
+    }
   }
 }

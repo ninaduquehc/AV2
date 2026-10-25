@@ -5,14 +5,15 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "cli": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "test": "tsx src/testes/crud.ts && tsx src/testes/falhas.ts && tsx src/testes/jornada.ts",
     "postinstall": "prisma generate"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^20.19.43",
-    "ts-node": "^10.9.2",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   },
@@ -28,20 +29,11 @@
     "@fastify/swagger": "^9.9.2",
     "@fastify/swagger-ui": "^6.1.2",
     "@prisma/client": "5.22.0",
-    "acorn": "^8.18.0",
-    "acorn-walk": "^8.3.5",
-    "arg": "^4.1.3",
     "bcrypt": "^6.0.0",
-    "create-require": "^1.1.1",
-    "diff": "^4.0.4",
     "dotenv": "^18.0.8",
     "fastify": "^5.12.7",
     "fastify-type-provider-zod": "^4.0.2",
-    "make-error": "^1.3.6",
     "prisma": "5.22.0",
-    "undici-types": "^6.21.0",
-    "v8-compile-cache-lib": "^3.0.1",
-    "yn": "^3.1.1",
     "zod": "^3.23.8"
   },
   "repository": {

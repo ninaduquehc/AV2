@@ -1,38 +1,14 @@
 import { estaProvisionado, provisionar } from "./config/provisionamento.js";
 import { autenticar } from "./auth/login.js";
 import { registrarAtividade } from "./auth/sessao.js";
+import { logger } from "./utils/logger.js";
+import { menuGuiado } from "./cli/guiado.js";
 import {
   rl,
   perguntar,
-  lerComando,
-  definirCompletador,
+  perguntarSenha,
   SessaoExpiradaError,
 } from "./cli/entrada.js";
-import { executarLinha } from "./cli/comandos.js";
-import { criarCompletador } from "./cli/completar.js";
-import { logger } from "./utils/logger.js";
-
-async function loopComandos(papel: string, usuario: string): Promise<void> {
-  definirCompletador(criarCompletador(papel));
-  logger.info('Modo comando. Digite "ajuda" para listar os comandos ou "menu" para o modo guiado.');
-
-  while (true) {
-    const linha = (await lerComando(`greencode (${usuario})> `)).trim();
-    if (linha === "") continue;
-
-    if (["sair", "exit"].includes(linha.toLowerCase())) {
-      logger.info("Encerrando sessão.");
-      break;
-    }
-
-    try {
-      await executarLinha(linha, { usuario, papel });
-    } catch (erro) {
-      if (erro instanceof SessaoExpiradaError) throw erro;
-      logger.erro((erro as Error).message);
-    }
-  }
-}
 
 async function principal() {
   try {
@@ -40,7 +16,7 @@ async function principal() {
       logger.info("Nenhuma configuração encontrada. Iniciando provisionamento...");
       let senhaAdmin = "";
       while (senhaAdmin.length < 8) {
-        senhaAdmin = await perguntar("Defina a senha do administrador (mín. 8 caracteres): ");
+        senhaAdmin = await perguntarSenha("Defina a senha do administrador (mín. 8 caracteres): ");
       }
       provisionar(senhaAdmin);
     } else {
@@ -48,13 +24,17 @@ async function principal() {
     }
 
     const usuario = await perguntar("Usuário: ");
-    const senha = await perguntar("Senha: ");
+    const senha = await perguntarSenha("Senha: ");
     const resultado = autenticar(usuario, senha);
 
     if (resultado.autenticado && resultado.papel) {
       logger.sucesso("Login realizado com sucesso.");
       registrarAtividade();
-      await loopComandos(resultado.papel, usuario.trim());
+
+      // Entra direto no menu guiado
+      await menuGuiado({ usuario: usuario.trim(), papel: resultado.papel });
+
+      logger.info("Sessão encerrada.");
     } else {
       logger.erro("Usuário ou senha inválidos.");
     }
