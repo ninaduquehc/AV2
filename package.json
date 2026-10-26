@@ -5,11 +5,10 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "cli": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "tsx src/testes/crud.ts && tsx src/testes/falhas.ts && tsx src/testes/jornada.ts",
-    "postinstall": "prisma generate"
+    "test": "jest",
+    "cli": "tsx src/cli.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

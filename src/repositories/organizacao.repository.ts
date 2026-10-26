@@ -9,7 +9,10 @@ export class OrganizacaoRepository {
   async findById(id: string) {
     return prisma.organizacao.findUnique({
       where: { id },
-      include: { contrato: true, lotes: true },
+      include: {
+        contrato: true,
+        lotes: true,
+      },
     });
   }
 
@@ -19,7 +22,13 @@ export class OrganizacaoRepository {
 
   async findAll() {
     return prisma.organizacao.findMany({
-      include: { contrato: true },
+      include: {
+        contrato: true,
+        _count: {
+          select: { lotes: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -27,6 +36,10 @@ export class OrganizacaoRepository {
     return prisma.organizacao.update({
       where: { id },
       data,
+      include: {
+        contrato: true,
+        lotes: true,
+      },
     });
   }
 

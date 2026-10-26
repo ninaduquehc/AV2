@@ -1,1 +1,0 @@
-export const PAPEIS_CRIAVEIS = ["operador_cadastro", "gestor_almoxarifado", "auditor"];

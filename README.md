@@ -1,69 +1,219 @@
-# greencode
 
-CLI de gestão de logística reversa de resíduos eletrônicos — Atividade Avaliativa
-Individual 1, FATEC, prof. Gerson Penha.
+# GreenCode API — Gestão de Logística Reversa de E-Lixo ♻️
 
-## Requisitos
-- Node.js 18+
-- Windows 10+ ou Linux Ubuntu 24.04+ (ou derivados)
+API RESTful desenvolvida com **Fastify, TypeScript, Prisma ORM, Zod e PostgreSQL** para a gestão de logística reversa, rastreabilidade de resíduos eletrônicos e controle de contratos entre organizações geradoras e operadoras.
 
-## Instalação
+---
+
+## 🚀 Tecnologias Utilizadas
+
+- **Node.js (v18+)** — Ambiente de execução JavaScript.
+- **TypeScript** — Tipagem estática.
+- **Fastify** — Framework web de alta performance.
+- **Prisma ORM** — Modelagem e manipulação do banco de dados.
+- **Zod** — Validação de dados.
+- **fastify-type-provider-zod** — Integração de validação e tipagem no Fastify.
+- **PostgreSQL** — Banco de dados relacional.
+- **Swagger / OpenAPI 3.0** — Documentação interativa da API.
+- **JWT (JSON Web Token)** — Autenticação de usuários.
+- **Bcrypt** — Hashing seguro de senhas.
+- **Jest** — Testes automatizados.
+
+---
+
+## 🔐 Autenticação e Controle de Acesso (RBAC)
+
+A API utiliza autenticação por **JSON Web Token (JWT)**. Para acessar as rotas protegidas, envie o token no cabeçalho HTTP:
+
+```http
+Authorization: Bearer <seu_token_jwt>
+```
+
+### Papéis de usuário
+
+O controle de acesso é baseado em papéis (*Role-Based Access Control — RBAC*).
+
+| Papel | Permissões |
+|---|---|
+| `ADMIN` | Acesso administrativo, incluindo CRUD de usuários, contratos e organizações, além das operações de exclusão autorizadas. |
+| `OPERADOR` | Cadastro e atualização de lotes e equipamentos, além do registro de movimentações. |
+| `CLIENTE` | Acesso de leitura para consultas e rastreabilidade das informações autorizadas. |
+
+As permissões efetivas dependem das regras de autorização configuradas nas rotas da aplicação.
+
+---
+
+## 📋 Pré-requisitos
+
+Antes de executar o projeto, certifique-se de ter instalado:
+
+- [Node.js](https://nodejs.org/)
+- npm
+- [PostgreSQL](https://www.postgresql.org/)
+- Git
+
+---
+
+## ⚙️ Configuração do Ambiente
+
+### 1. Clonar o repositório
+
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd <NOME_DO_REPOSITORIO>
+```
+
+Substitua os valores entre `< >` pelo endereço e nome reais do repositório.
+
+### 2. Instalar as dependências
+
 ```bash
 npm install
 ```
 
-## Uso
+### 3. Configurar as variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto, utilizando o `.env.example` como referência.
+
+Exemplo de configuração:
+
+```ini
+PORT=3000
+HOST=0.0.0.0
+JWT_SECRET=sua_chave_secreta_jwt_longa
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/greencode_db?schema=public"
+CORS_ORIGIN="*"
+```
+
+**Importante:**
+
+- Substitua as credenciais do banco de dados pelos valores do seu ambiente.
+- Utilize um segredo JWT forte e exclusivo.
+- Não compartilhe nem versione o arquivo `.env`.
+- Em produção, configure o CORS para permitir somente as origens autorizadas.
+
+### 4. Configurar o banco de dados
+
+Com o PostgreSQL em execução e a variável `DATABASE_URL` configurada, execute as migrações do Prisma:
+
+```bash
+npx prisma migrate dev
+```
+
+Para popular o banco com os dados iniciais, execute:
+
+```bash
+npx prisma db seed
+```
+
+A execução do *seed* depende de sua configuração no projeto.
+
+---
+
+## 🛠️ Executando a Aplicação
+
+### Modo de desenvolvimento
+
 ```bash
 npm run dev
 ```
 
-Na primeira execução, o sistema entra em modo de provisionamento: pede a senha do
-administrador e gera automaticamente a chave de criptografia AES-256. Nas execuções
-seguintes, pede login diretamente.
+### Interface CLI
 
-Digite `ajuda` a qualquer momento para ver os comandos disponíveis ao seu papel, ou
-`menu` para um modo guiado.
+```bash
+npm run cli
+```
 
-## Testes
+Os comandos dependem dos scripts configurados no arquivo `package.json`.
+
+---
+
+## 📚 Documentação da API
+
+Com a aplicação em execução, acesse:
+
+- **Swagger UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
+- **Health Check:** [http://localhost:3000/health](http://localhost:3000/health)
+
+A documentação Swagger permite visualizar os endpoints, consultar os schemas e testar as requisições disponíveis.
+
+---
+
+## 🧪 Testes Automatizados
+
+Para executar os testes automatizados configurados no projeto, utilize:
+
 ```bash
 npm test
 ```
 
-Ou individualmente:
+Os testes podem abranger funcionalidades unitárias e de integração, conforme a implementação existente.
 
-```bash
-npx ts-node src/testes/jornada.ts
-npx ts-node src/testes/falhas.ts
-npx ts-node src/testes/crud.ts
+---
+
+## 📐 Estrutura do Projeto
+
+```text
+src/
+├── controllers/    # Controle das requisições e respostas HTTP
+├── services/       # Regras de negócio e operações da aplicação
+├── repositories/   # Acesso aos dados por meio do Prisma
+├── routes/         # Rotas e schemas de validação Zod/Swagger
+├── middlewares/    # Autenticação JWT e controle de acesso RBAC
+├── models/         # Classes e modelos de erro personalizados
+├── utils/          # Funções utilitárias e tratamento de erros
+├── lib/            # Instâncias compartilhadas, como o Prisma Client
+├── app.ts          # Configuração do Fastify e de seus plugins
+└── server.ts       # Inicialização do servidor e encerramento controlado
 ```
 
-O primeiro simula a jornada completa (provisionamento → cadastros → movimentações →
-rastreabilidade). O segundo valida os cenários de falha (CNPJ inválido, datas fora
-da janela permitida, transições de status inválidas, justificativa obrigatória).
-O terceiro cobre o CRUD completo (criar, listar, consultar, atualizar, remover) de organização,
-contrato, lote, equipamento e usuário, incluindo integridade referencial e permissões por papel.
-Todos usam uma pasta `data/` isolada, apagada no início de cada execução.
+---
 
-## Arquitetura
-Veja `docs/SEGURANCA.md` para a justificativa das escolhas de criptografia, hash de
-senhas, expiração de sessão e os cenários de falha cobertos.
+## 🔄 Funcionalidades Principais
 
-Estrutura de pastas: `auth/` (autenticação e permissões), `cli/` (entrada, parser,
-autocompletar), `commands/` (ações da CLI), `config/` (caminhos e provisionamento),
-`models/` (entidades de domínio), `persistence/` (criptografia, journal,
-repositório), `utils/`.
+- Autenticação de usuários com JWT.
+- Controle de permissões baseado em papéis (RBAC).
+- Gerenciamento de organizações.
+- Gerenciamento de contratos.
+- Cadastro e atualização de lotes de resíduos eletrônicos.
+- Cadastro e atualização de equipamentos.
+- Registro de movimentações para rastreabilidade.
+- Persistência de dados em PostgreSQL com Prisma ORM.
+- Validação de dados utilizando Zod.
+- Documentação interativa com Swagger.
+- Testes automatizados com Jest.
+- Verificação de disponibilidade por meio do endpoint de health check.
+- Interface de linha de comando (CLI).
 
-## Papéis
-`administrador`, `operador_cadastro`, `gestor_almoxarifado`, `auditor` — permissões
-definidas em `src/auth/permissoes.ts`.
+*Observação: a disponibilidade e o comportamento de cada funcionalidade dependem da implementação atual da API.*
 
-## CRUD por entidade
-Todas as entidades seguem o mesmo padrão `<entidade> <criar|listar|consultar|atualizar|remover>`
-(`usuario`, `organizacao`, `contrato`, `lote`, `equipamento`). Digite `ajuda` para a sintaxe completa.
+---
 
-- `listar` e `consultar` são leitura e ficam disponíveis a todos os papéis de cadastro, inclusive o auditor.
-- `criar`, `atualizar` e `remover` exigem a permissão de escrita da entidade.
-- Não se remove registro que tenha dependentes: organização com contratos/lotes, lote com
-  equipamentos, equipamento já triado ou com movimentações, usuário administrador.
-- Movimentações são trilha de auditoria imutável e só têm consulta (`relatorio rastrear`).
-- Toda escrita é registrada no journal; senhas nunca vão para ele.
+## 🔒 Boas Práticas de Segurança
+
+- Armazene segredos e credenciais em variáveis de ambiente.
+- Não versione arquivos `.env` nem exponha tokens JWT.
+- Armazene senhas utilizando hashing seguro, nunca em texto puro.
+- Valide os dados de entrada antes de processá-los.
+- Restrinja o acesso aos endpoints conforme o papel do usuário.
+- Configure o CORS de acordo com os ambientes autorizados.
+- Utilize HTTPS em ambientes de produção.
+- Mantenha as dependências atualizadas.
+
+---
+
+## 👥 Contribuição
+
+Para contribuir com o projeto:
+
+1. Crie uma branch para sua alteração.
+2. Implemente a funcionalidade ou correção.
+3. Execute os testes automatizados.
+4. Verifique se a aplicação inicia corretamente.
+5. Envie suas alterações por meio de um Pull Request.
+
+---
+
+## 📄 Licença
+
+Consulte o arquivo `LICENSE`, caso exista no repositório, para obter informações sobre a licença do projeto.

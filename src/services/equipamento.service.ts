@@ -9,14 +9,24 @@ export class EquipamentoService {
     private loteRepo = new LoteRepository()
   ) {}
 
-  async criar(data: { codigoBarrasInterno: string; tipo: string; status: StatusEquipamento; loteId: string }) {
+  async criar(data: {
+    codigoBarrasInterno: string;
+    tipo: string;
+    status?: StatusEquipamento;
+    loteId: string;
+  }) {
     const lote = await this.loteRepo.findById(data.loteId);
     if (!lote) throw new AppError('Lote especificado não encontrado.', 404);
 
     const existe = await this.repo.findByCodigoBarras(data.codigoBarrasInterno);
     if (existe) throw new AppError('Código de barras já cadastrado.', 409);
 
-    return this.repo.create(data);
+    return this.repo.create({
+      codigoBarrasInterno: data.codigoBarrasInterno,
+      tipo: data.tipo,
+      status: data.status || StatusEquipamento.RECEBIDO,
+      loteId: data.loteId,
+    });
   }
 
   async buscarPorId(id: string) {
@@ -37,7 +47,7 @@ export class EquipamentoService {
   async remover(id: string) {
     const eq = await this.buscarPorId(id);
 
-    if (eq.status !== 'RECEBIDO' || (eq.movimentacoes && eq.movimentacoes.length > 0)) {
+    if (eq.status !== StatusEquipamento.RECEBIDO || (eq.movimentacoes && eq.movimentacoes.length > 0)) {
       throw new AppError('Só é possível remover equipamentos com status RECEBIDO e sem movimentações registradas.', 409);
     }
 
