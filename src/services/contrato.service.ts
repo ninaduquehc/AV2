@@ -55,4 +55,26 @@ export class ContratoService {
     await this.buscarPorId(id);
     return this.repo.delete(id);
   }
+
+  // Método de Cálculo Financeiro do Contrato
+  async calcularEstimativaFaturamento(id: string, pesoTotalKg: number) {
+    const contrato = await this.buscarPorId(id);
+    const clausulas = (contrato.clausulas as Record<string, number>) || {};
+
+    const valorBase = clausulas.valorBaseMensal || 0;
+    const tarifaPorKg = clausulas.tarifaPorKgResíduo || 0;
+
+    const valorVariavel = pesoTotalKg * tarifaPorKg;
+    const totalEstimado = valorBase + valorVariavel;
+
+    return {
+      contratoId: contrato.id,
+      numeroContrato: contrato.numeroContrato,
+      pesoTotalKg,
+      valorBase,
+      tarifaPorKg,
+      valorVariavel,
+      totalEstimado,
+    };
+  }
 }

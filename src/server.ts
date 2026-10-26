@@ -11,3 +11,19 @@ try {
   app.log.error(err);
   process.exit(1);
 }
+
+// Handler para Graceful Shutdown
+const closeGracefully = async (signal: string) => {
+  console.log(`\n⚠️ Sinal ${signal} recebido. Encerrando servidor graciosamente...`);
+  try {
+    await app.close();
+    console.log('✅ Conexões e servidor encerrados com sucesso.');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Erro ao encerrar o servidor:', err);
+    process.exit(1);
+  }
+};
+
+process.on('SIGINT', () => closeGracefully('SIGINT'));
+process.on('SIGTERM', () => closeGracefully('SIGTERM'));

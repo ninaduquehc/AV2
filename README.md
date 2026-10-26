@@ -1,27 +1,43 @@
-
 # GreenCode API - Logística Reversa de E-Lixo ♻️
 
-API RESTful para gestão de logística reversa, rastreabilidade e reciclagem de resíduos eletrônicos.
+API RESTful para gestão de logística reversa, rastreabilidade e reciclagem de resíduos eletrônicos, desenvolvida com foco em alta integridade de dados, controle de concorrência e arquitetura em camadas.
+
+---
 
 ## 🚀 Tecnologias
 
-- **Node.js** v20+
-- **TypeScript** e **Fastify**
-- **Prisma ORM** e **PostgreSQL**
-- **Zod** — Validação de dados e schemas OpenAPI
-- **Vitest** — Testes automatizados de integração
-- **Swagger UI** — Documentação interativa da API
-- **Docker Compose** — Gerenciamento do ambiente de desenvolvimento
+- **Node.js** (v20+) e **TypeScript**
+- **Fastify** (com `fastify-type-provider-zod`)
+- **Prisma ORM** e **PostgreSQL 16**
+- **Zod** (validação de schemas e OpenAPI)
+- **Vitest** (testes de integração automatizados)
+- **Swagger UI** (documentação interativa das rotas)
+- **Docker Compose** (containerização do banco de dados)
+
+---
+
+## 🎯 Principais Recursos e Regras de Negócio
+
+- **Máquina de Estados Finita (FSM):** transições estritas e validadas para o ciclo de vida dos equipamentos, da recepção ao descarte ou reuso.
+- **Controle de Concorrência Otimista (OCC):** prevenção de *race conditions* e edições simultâneas através do versionamento atômico (`version`).
+- **Autenticação e RBAC:** controle de acesso baseado em perfis (`ADMIN`, `OPERADOR`, `CLIENTE`) via tokens JWT stateless.
+- **Rastreabilidade e Auditoria:** histórico de movimentações por equipamento com proteção por chave estrangeira `Restrict`.
+- **Cálculo Financeiro de Contratos:** módulo para estimativa de faturamento com base em tarifas fixas, variáveis por quilograma e multas contratuais.
+- **Resiliência:** tratamento centralizado de exceções, *rate limiting* contra ataques de força bruta e suporte a *Graceful Shutdown* (`SIGINT`/`SIGTERM`).
+
+---
 
 ## 📋 Pré-requisitos
 
-- Node.js v20 ou superior
-- npm
-- Docker e Docker Compose
+- **Node.js** v20 ou superior
+- **npm** v10 ou superior
+- **Docker** e **Docker Compose**
 
-## 📦 Como Rodar a Aplicação com Docker
+---
 
-### 1. Configure as variáveis de ambiente
+## 📦 Como Rodar a Aplicação
+
+### 1. Clone o repositório e configure as variáveis de ambiente
 
 Clone o repositório e acesse a pasta do projeto:
 
@@ -30,87 +46,94 @@ git clone https://github.com/ninaduquehc/AV2.git
 cd AV2
 ```
 
-Copie o arquivo de exemplo das variáveis de ambiente:
+Copie o arquivo de exemplo das variáveis de ambiente.
+
+**Linux / macOS (Bash):**
 
 ```bash
 cp .env.example .env
 ```
 
-Configure as variáveis necessárias no arquivo `.env`.
+**Windows (CMD):**
 
-### 2. Inicie o banco de dados PostgreSQL
+```cmd
+copy .env.example .env
+```
+
+**Windows (PowerShell):**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+### 2. Inicie o PostgreSQL via Docker e instale as dependências
 
 ```bash
 docker-compose up -d
-```
-
-### 3. Instale as dependências
-
-```bash
 npm install
 ```
 
-### 4. Execute as migrações do banco de dados
+### 3. Prepare o banco de dados
+
+Execute as migrações e popule o banco com a massa de dados inicial (*seed*):
 
 ```bash
 npm run migrate
-```
-
-### 5. Popule o banco de dados
-
-```bash
 npm run seed
 ```
 
-### 6. Inicie o servidor
+### 4. Inicie o servidor em modo de desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-## 📖 Documentação da API
+---
 
-Com a aplicação em execução, acesse a documentação interativa do Swagger:
+## 📖 Documentação das Rotas (Swagger)
 
-**Swagger UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
+Com a aplicação em execução, acesse a documentação interativa OpenAPI no navegador:
 
-## 🧪 Rodando os Testes
+**Swagger UI:** http://localhost:3000/docs
 
-Para executar os testes automatizados de integração:
+---
+
+## 🔐 Credenciais Padrão para Testes (Seed)
+
+Após executar `npm run seed`, utilize as credenciais abaixo para autenticação na API ou no Swagger.
+
+| Perfil | E-mail | Senha | Permissões |
+|---|---|---|---|
+| **ADMIN** | `admin@greencode.com` | `admin123` | Acesso total: usuários, contratos, lotes, equipamentos e organizações |
+| **OPERADOR** | `operador@greencode.com` | `operador123` | Gestão operacional: lotes, equipamentos e movimentações |
+
+---
+
+## 🧪 Testes Automatizados
+
+Para executar a suíte de testes de integração com Vitest, utilize:
 
 ```bash
 npm test
 ```
 
-A suíte de testes utiliza Vitest para validar funcionalidades como autenticação, controle de acesso baseado em papéis (RBAC), máquina de estados finita (FSM), controle otimista de concorrência (OCC) e regras de negócio.
+Os testes cobrem autenticação, RBAC, FSM, concorrência com `Promise.all` e validações Zod.
 
-## 🔐 Credenciais Padrão (Seed)
+---
 
-Após executar `npm run seed`, as seguintes credenciais estarão disponíveis para testes no ambiente de desenvolvimento:
+## 📚 Documentação Complementar
 
-| E-mail | Senha | Perfil |
-|---|---|---|
-| `admin@greencode.com` | `admin123` | `ADMIN` |
-| `operador@greencode.com` | `operador123` | `OPERADOR` |
+- 🔒 **Segurança:** políticas de *rate limiting*, *timing attacks* e proteções web em [`DOCS/SEGURANCA.md`](DOCS/SEGURANCA.md).
+- 📐 **Arquitetura e FSM:** diagrama de classes UML e fluxo de estados dos equipamentos em [`DOCS/UML.md`](DOCS/UML.md).
+- 💡 **Decisões Técnicas:** justificativas de tecnologia, *trade-offs* e escolhas de design em [`DOCS/DECISOES.md`](DOCS/DECISOES.md).
 
-**Atenção:** essas credenciais são destinadas ao desenvolvimento. Altere as senhas padrão antes de utilizar a aplicação em ambientes expostos.
+---
 
-## 🔒 Segurança e Arquitetura
+## ✅ Validação Final e Execução dos Testes
 
-A API implementa mecanismos de autenticação JWT, controle de acesso baseado em papéis (RBAC), proteção contra ataques de temporização (*timing attacks*), limitação de requisições (*rate limiting*), validação de transições de estado e controle otimista de concorrência.
-
-Para mais detalhes sobre a arquitetura e as políticas de segurança, consulte [`DOCS/SEGURANCA.md`](DOCS/SEGURANCA.md).
-
-## 📐 Diagrama de Classes e Máquina de Estados
-
-A documentação da arquitetura e do fluxo de estados dos equipamentos está disponível em [`DOCS/UML.md`](DOCS/UML.md).
-
-## 🛠️ Validação Final
-
-Para aplicar a migration de ajuste da chave estrangeira de movimentações, popular o banco e executar os testes:
+Execute os comandos abaixo para popular o banco com os dados iniciais e executar os testes automatizados:
 
 ```bash
-npx prisma migrate dev --name ajuste_fkey_movimentacao_restrict
 npm run seed
 npm test
 ```
