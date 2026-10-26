@@ -65,6 +65,7 @@ async function main() {
     },
   });
 
+  // O equipamento nasce em EM_TRIAGEM com version: 1 pois possui 1 movimentação registrada de histórico
   const eq1 = await prisma.equipamento.create({
     data: {
       codigoBarrasInterno: 'EQP-100001',

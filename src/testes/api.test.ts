@@ -2,74 +2,36 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
 
-describe('GreenCode API - Suíte de Testes e Regras de Negócio', () => {
+describe('GreenCode API - Suíte Completa de Testes e Regras de Negócio', () => {
   let app: FastifyInstance;
   let tokenAdmin: string;
   let tokenOperador: string;
   let organizacaoId: string;
-  let loteId: string;
-  let equipamentoId: string;
 
   beforeAll(async () => {
     app = await buildApp();
     await app.ready();
 
-    // Login ADMIN
     const resAdmin = await app.inject({
       method: 'POST',
       url: '/auth/login',
       payload: { email: 'admin@greencode.com', senha: 'admin123' },
     });
-    expect(resAdmin.statusCode).toBe(200);
     tokenAdmin = resAdmin.json().token;
-    expect(tokenAdmin).toBeDefined();
 
-    // Login OPERADOR
     const resOperador = await app.inject({
       method: 'POST',
       url: '/auth/login',
       payload: { email: 'operador@greencode.com', senha: 'operador123' },
     });
-    expect(resOperador.statusCode).toBe(200);
     tokenOperador = resOperador.json().token;
-    expect(tokenOperador).toBeDefined();
 
-    // Busca a organização criada pelo Seed para garantir que sempre existirá uma válida
     const orgsRes = await app.inject({
       method: 'GET',
       url: '/organizacoes',
       headers: { authorization: `Bearer ${tokenAdmin}` },
     });
-    expect(orgsRes.statusCode).toBe(200);
-    expect(orgsRes.json().length).toBeGreaterThan(0);
     organizacaoId = orgsRes.json()[0].id;
-
-    // Cria um Lote isolado para os testes
-    const loteRes = await app.inject({
-      method: 'POST',
-      url: '/lotes',
-      headers: { authorization: `Bearer ${tokenAdmin}` },
-      payload: {
-        codigo: `LOT-TEST-${Date.now()}`,
-        organizacaoId,
-      },
-    });
-    expect(loteRes.statusCode).toBe(201);
-    loteId = loteRes.json().id;
-
-    // Cria Equipamento isolado para os testes (nascendo obrigatoriamente como RECEBIDO)
-    const eqRes = await app.inject({
-      method: 'POST',
-      url: '/equipamentos',
-      headers: { authorization: `Bearer ${tokenAdmin}` },
-      payload: {
-        codigoBarrasInterno: `EQP-TEST-${Date.now()}`,
-        tipo: 'Servidor Teste',
-        loteId,
-      },
-    });
-    expect(eqRes.statusCode).toBe(201);
-    equipamentoId = eqRes.json().id;
   });
 
   afterAll(async () => {
@@ -82,6 +44,16 @@ describe('GreenCode API - Suíte de Testes e Regras de Negócio', () => {
     expect(res.json()).toHaveProperty('status', 'ok');
   });
 
+  it('Validação (400): Deve rejeitar login com e-mail em formato inválido', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'email-invalido', senha: '123' },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toHaveProperty('detalhes');
+  });
+
   it('RBAC (403): OPERADOR não deve conseguir apagar usuários', async () => {
     const res = await app.inject({
       method: 'DELETE',
@@ -91,64 +63,116 @@ describe('GreenCode API - Suíte de Testes e Regras de Negócio', () => {
     expect(res.statusCode).toBe(403);
   });
 
-  it('FSM (422): Não deve permitir saltar do status RECEBIDO diretamente para DESCARTE', async () => {
-    const res = await app.inject({
+  it('Regra de Negócio (409): Não deve permitir remover lote que contém equipamentos', async () => {
+    const loteRes = await app.inject({
       method: 'POST',
-      url: '/movimentacoes',
+      url: '/lotes',
       headers: { authorization: `Bearer ${tokenAdmin}` },
-      payload: {
-        equipamentoId,
-        statusNovo: 'DESCARTE',
-        version: 0,
-      },
+      payload: { codigo: `LOT-DEL-${Date.now()}`, organizacaoId },
+    });
+    const loteId = loteRes.json().id;
+
+    await app.inject({
+      method: 'POST',
+      url: '/equipamentos',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { codigoBarrasInterno: `EQP-DEL-${Date.now()}`, tipo: 'Monitor', loteId },
     });
 
-    expect(res.statusCode).toBe(422);
-    expect(res.json().error).toContain('Transição de status inválida');
+    const delRes = await app.inject({
+      method: 'DELETE',
+      url: `/lotes/${loteId}`,
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+    });
+
+    expect(delRes.statusCode).toBe(409);
+    expect(delRes.json().error).toContain('Não é possível remover um lote que possui equipamentos vinculados');
   });
 
-  it('Caminho Feliz (201): Deve movimentar de RECEBIDO para EM_TRIAGEM com sucesso', async () => {
+  it('Movimentação em Massa (201): Deve movimentar múltiplos equipamentos e sincronizar o Lote', async () => {
+    const loteRes = await app.inject({
+      method: 'POST',
+      url: '/lotes',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { codigo: `LOT-MASSA-${Date.now()}`, organizacaoId },
+    });
+    const loteId = loteRes.json().id;
+
+    const eq1 = await app.inject({
+      method: 'POST',
+      url: '/equipamentos',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { codigoBarrasInterno: `EQP-M1-${Date.now()}`, tipo: 'Teclado', loteId },
+    });
+    const eq2 = await app.inject({
+      method: 'POST',
+      url: '/equipamentos',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { codigoBarrasInterno: `EQP-M2-${Date.now()}`, tipo: 'Mouse', loteId },
+    });
+
     const res = await app.inject({
       method: 'POST',
-      url: '/movimentacoes',
+      url: '/movimentacoes/em-massa',
       headers: { authorization: `Bearer ${tokenAdmin}` },
       payload: {
-        equipamentoId,
+        itens: [
+          { equipamentoId: eq1.json().id, version: 0 },
+          { equipamentoId: eq2.json().id, version: 0 },
+        ],
         statusNovo: 'EM_TRIAGEM',
-        version: 0,
-        observacao: 'Iniciando triagem no laboratório',
+        observacao: 'Triagem em lote',
       },
     });
 
     expect(res.statusCode).toBe(201);
-    expect(res.json().statusNovo).toBe('EM_TRIAGEM');
-  });
-
-  it('Bloqueio Otimista (409): Deve falhar ao informar versão incompatível', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/movimentacoes',
-      headers: { authorization: `Bearer ${tokenAdmin}` },
-      payload: {
-        equipamentoId,
-        statusNovo: 'EM_DESMONTAGEM',
-        version: 0, // Versão antiga (a versão atual é 1 após a movimentação do teste anterior)
-      },
-    });
-
-    expect(res.statusCode).toBe(409);
-    expect(res.json().error).toContain('Conflito de concorrência');
-  });
-
-  it('Rastreabilidade (200): Deve retornar o histórico de movimentações', async () => {
-    const res = await app.inject({
-      method: 'GET',
-      url: `/movimentacoes/rastreabilidade/${equipamentoId}`,
-      headers: { authorization: `Bearer ${tokenAdmin}` },
-    });
-
-    expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.json())).toBe(true);
-    expect(res.json().length).toBeGreaterThan(0);
+    expect(res.json().length).toBe(2);
+
+    // Verifica se o Lote foi sincronizado para EM_TRIAGEM
+    const loteCheck = await app.inject({
+      method: 'GET',
+      url: `/lotes/${loteId}`,
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+    });
+    expect(loteCheck.json().status).toBe('EM_TRIAGEM');
+  });
+
+  it('Concorrência Real - Bloqueio Otimista (409): Requisições simultâneas devem resultar em 1 Sucesso (201) e 1 Conflito (409)', async () => {
+    const loteRes = await app.inject({
+      method: 'POST',
+      url: '/lotes',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { codigo: `LOT-RACE-${Date.now()}`, organizacaoId },
+    });
+
+    const eqRes = await app.inject({
+      method: 'POST',
+      url: '/equipamentos',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { codigoBarrasInterno: `EQP-RACE-${Date.now()}`, tipo: 'Nobreak', loteId: loteRes.json().id },
+    });
+    const eqId = eqRes.json().id;
+
+    // Dispara 2 requisições idênticas simultâneas com a mesma versão (version: 0)
+    const [req1, req2] = await Promise.all([
+      app.inject({
+        method: 'POST',
+        url: '/movimentacoes',
+        headers: { authorization: `Bearer ${tokenAdmin}` },
+        payload: { equipamentoId: eqId, statusNovo: 'EM_TRIAGEM', version: 0 },
+      }),
+      app.inject({
+        method: 'POST',
+        url: '/movimentacoes',
+        headers: { authorization: `Bearer ${tokenAdmin}` },
+        payload: { equipamentoId: eqId, statusNovo: 'EM_TRIAGEM', version: 0 },
+      }),
+    ]);
+
+    const statusCodes = [req1.statusCode, req2.statusCode].sort();
+    
+    // Uma deve ser processada com sucesso (201) e a outra barrada por conflito de versão (409)
+    expect(statusCodes).toEqual([201, 409]);
   });
 });

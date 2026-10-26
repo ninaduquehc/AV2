@@ -1,5 +1,5 @@
 import { EquipamentoRepository } from '../repositories/equipamento.repository.js';
-import { StatusEquipamento } from '@prisma/client';
+import { StatusEquipamento, StatusLote } from '@prisma/client';
 import { LoteRepository } from '../repositories/lote.repository.js';
 import { AppError } from '../models/erros.js';
 
@@ -16,6 +16,10 @@ export class EquipamentoService {
   }) {
     const lote = await this.loteRepo.findById(data.loteId);
     if (!lote) throw new AppError('Lote especificado não encontrado.', 404);
+
+    if (lote.status === StatusLote.CANCELADO) {
+      throw new AppError('Não é possível adicionar equipamentos a um lote cancelado.', 422);
+    }
 
     const existe = await this.repo.findByCodigoBarras(data.codigoBarrasInterno);
     if (existe) throw new AppError('Código de barras já cadastrado.', 409);

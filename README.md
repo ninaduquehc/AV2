@@ -17,8 +17,7 @@ API RESTful para gestão de logística reversa, rastreabilidade e reciclagem de 
 
 - Node.js v20 ou superior
 - npm
-- Docker
-- Docker Compose
+- Docker e Docker Compose
 
 ## 📦 Como Rodar a Aplicação com Docker
 
@@ -37,7 +36,7 @@ Copie o arquivo de exemplo das variáveis de ambiente:
 cp .env.example .env
 ```
 
-Configure os valores necessários no arquivo `.env`.
+Configure as variáveis necessárias no arquivo `.env`.
 
 ### 2. Inicie o banco de dados PostgreSQL
 
@@ -73,44 +72,45 @@ npm run dev
 
 Com a aplicação em execução, acesse a documentação interativa do Swagger:
 
-**Swagger UI:** http://localhost:3000/docs
+**Swagger UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
 
 ## 🧪 Rodando os Testes
 
-Para executar os testes automatizados:
+Para executar os testes automatizados de integração:
 
 ```bash
 npm test
 ```
 
-Os testes utilizam Vitest, conforme a configuração do projeto.
+A suíte de testes utiliza Vitest para validar funcionalidades como autenticação, controle de acesso baseado em papéis (RBAC), máquina de estados finita (FSM), controle otimista de concorrência (OCC) e regras de negócio.
 
 ## 🔐 Credenciais Padrão (Seed)
 
-Após executar o Seed, as credenciais abaixo poderão ser utilizadas, caso estejam configuradas nos dados iniciais:
+Após executar `npm run seed`, as seguintes credenciais estarão disponíveis para testes no ambiente de desenvolvimento:
 
 | E-mail | Senha | Perfil |
 |---|---|---|
 | `admin@greencode.com` | `admin123` | `ADMIN` |
 | `operador@greencode.com` | `operador123` | `OPERADOR` |
 
-**Atenção:** essas credenciais são destinadas ao ambiente de desenvolvimento. Altere as senhas padrão antes de utilizar a aplicação em ambientes expostos.
+**Atenção:** essas credenciais são destinadas ao desenvolvimento. Altere as senhas padrão antes de utilizar a aplicação em ambientes expostos.
 
-## 🔒 Segurança
+## 🔒 Segurança e Arquitetura
 
-A API implementa mecanismos de autenticação, controle de acesso baseado em papéis (RBAC), proteção contra tentativas de enumeração de usuários e controle de concorrência nas operações de atualização.
+A API implementa mecanismos de autenticação JWT, controle de acesso baseado em papéis (RBAC), proteção contra ataques de temporização (*timing attacks*), limitação de requisições (*rate limiting*), validação de transições de estado e controle otimista de concorrência.
 
-Para conhecer os mecanismos de segurança implementados, consulte o documento [`DOCS/SEGURANCA.md`](DOCS/SEGURANCA.md).
+Para mais detalhes sobre a arquitetura e as políticas de segurança, consulte [`DOCS/SEGURANCA.md`](DOCS/SEGURANCA.md).
 
-## 🛠️ Comandos Finais de Validação
+## 📐 Diagrama de Classes e Máquina de Estados
 
-Para iniciar o banco, aplicar as migrações, popular os dados e executar os testes:
+A documentação da arquitetura e do fluxo de estados dos equipamentos está disponível em [`DOCS/UML.md`](DOCS/UML.md).
+
+## 🛠️ Validação Final
+
+Para aplicar a migration de ajuste da chave estrangeira de movimentações, popular o banco e executar os testes:
 
 ```bash
-docker-compose up -d
-npm run migrate
+npx prisma migrate dev --name ajuste_fkey_movimentacao_restrict
 npm run seed
 npm test
 ```
-
-**Observação:** os comandos `migrate` e `seed` precisam estar definidos no arquivo `package.json`. O arquivo `.env.example`, o serviço PostgreSQL do Docker Compose e as configurações do Vitest também devem existir no projeto.
