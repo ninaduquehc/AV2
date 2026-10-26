@@ -7,7 +7,14 @@ export class ContratoController {
 
   async create(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const body = req.body as any;
+      const body = req.body as {
+        numeroContrato: string;
+        clausulas?: Record<string, unknown>;
+        vigenciaInicio: string;
+        vigenciaFim: string;
+        organizacaoId: string;
+      };
+
       const result = await this.service.criar({
         ...body,
         vigenciaInicio: new Date(body.vigenciaInicio),
@@ -19,7 +26,7 @@ export class ContratoController {
     }
   }
 
-  async index(req: FastifyRequest, reply: FastifyReply) {
+  async index(_req: FastifyRequest, reply: FastifyReply) {
     try {
       const result = await this.service.listarTodos();
       return reply.send(result);
@@ -41,8 +48,20 @@ export class ContratoController {
   async update(req: FastifyRequest, reply: FastifyReply) {
     try {
       const { id } = req.params as { id: string };
-      const body = req.body as any;
-      const dataToUpdate: any = { ...body };
+      const body = req.body as {
+        numeroContrato?: string;
+        clausulas?: Record<string, unknown>;
+        vigenciaInicio?: string;
+        vigenciaFim?: string;
+      };
+
+      const dataToUpdate: {
+        numeroContrato?: string;
+        clausulas?: Record<string, unknown>;
+        vigenciaInicio?: Date;
+        vigenciaFim?: Date;
+      } = { ...body, vigenciaInicio: undefined, vigenciaFim: undefined };
+
       if (body.vigenciaInicio) dataToUpdate.vigenciaInicio = new Date(body.vigenciaInicio);
       if (body.vigenciaFim) dataToUpdate.vigenciaFim = new Date(body.vigenciaFim);
 

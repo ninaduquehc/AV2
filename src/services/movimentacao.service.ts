@@ -162,13 +162,13 @@ export class MovimentacaoService {
     const todosFinalizados = equipamentos.every(
       (e) => e.status === StatusEquipamento.DESCARTE || e.status === StatusEquipamento.REUSO
     );
-    const todosEmTriagemOuAlem = equipamentos.every(
+    const algumEmAndamento = equipamentos.some(
       (e) => e.status !== StatusEquipamento.RECEBIDO
     );
 
     if (todosFinalizados) {
       await tx.lote.update({ where: { id: loteId }, data: { status: StatusLote.PROCESSADO } });
-    } else if (todosEmTriagemOuAlem) {
+    } else if (algumEmAndamento) {
       await tx.lote.update({ where: { id: loteId }, data: { status: StatusLote.EM_TRIAGEM } });
     }
   }

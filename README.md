@@ -100,7 +100,7 @@ Após executar o Seed, as credenciais abaixo poderão ser utilizadas, caso estej
 
 A API implementa mecanismos de autenticação, controle de acesso baseado em papéis (RBAC), proteção contra tentativas de enumeração de usuários e controle de concorrência nas operações de atualização.
 
-Para conhecer os mecanismos de segurança implementados, consulte o documento [`SEGURANCA.md`](SEGURANCA.md).
+Para conhecer os mecanismos de segurança implementados, consulte o documento [`DOCS/SEGURANCA.md`](DOCS/SEGURANCA.md).
 
 ## 🛠️ Comandos Finais de Validação
 

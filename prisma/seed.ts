@@ -4,6 +4,10 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('ERRO DE SEGURANÇA: O comando de seed não pode ser executado em ambiente de PRODUÇÃO!');
+  }
+
   await prisma.movimentacao.deleteMany();
   await prisma.equipamento.deleteMany();
   await prisma.lote.deleteMany();

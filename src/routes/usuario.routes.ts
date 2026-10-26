@@ -6,11 +6,11 @@ import { authenticate, authorize } from '../middlewares/auth.js';
 import { erroSchema } from '../schemas/swagger.schemas.js';
 
 const usuarioSchema = z.object({
-  id: z.string().uuid(),
-  nome: z.string(),
-  email: z.string().email(),
-  role: z.nativeEnum(Role),
-  createdAt: z.string().or(z.date()).optional(),
+  id: z.string().uuid().describe("ID único do usuário"),
+  nome: z.string().describe("Nome completo do usuário"),
+  email: z.string().email().describe("E-mail corporativo cadastrado"),
+  role: z.nativeEnum(Role).describe("Perfil de acesso (ADMIN, OPERADOR, CLIENTE)"),
+  createdAt: z.string().datetime().optional(),
 });
 
 export const usuarioRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -33,6 +33,7 @@ export const usuarioRoutes: FastifyPluginAsyncZod = async (app) => {
         401: erroSchema,
         403: erroSchema,
         409: erroSchema,
+        500: erroSchema,
       },
     },
   }, (req, reply) => usuarioController.create(req, reply));
@@ -46,6 +47,7 @@ export const usuarioRoutes: FastifyPluginAsyncZod = async (app) => {
         200: z.array(usuarioSchema),
         401: erroSchema,
         403: erroSchema,
+        500: erroSchema,
       },
     },
   }, (req, reply) => usuarioController.index(req, reply));
@@ -61,6 +63,8 @@ export const usuarioRoutes: FastifyPluginAsyncZod = async (app) => {
         401: erroSchema,
         403: erroSchema,
         404: erroSchema,
+        409: erroSchema,
+        500: erroSchema,
       },
     },
   }, (req, reply) => usuarioController.delete(req, reply));

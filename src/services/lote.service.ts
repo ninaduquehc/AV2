@@ -13,7 +13,6 @@ export class LoteService {
   async criar(data: {
     codigo: string;
     dataRecebimento?: Date;
-    status?: StatusLote;
     organizacaoId: string;
     equipamentos?: Array<{ codigoBarrasInterno: string; tipo: string }>;
   }) {
@@ -22,14 +21,13 @@ export class LoteService {
 
     const equipamentosParaCriar = data.equipamentos;
 
-    // Se houver equipamentos na requisição, executa a criação em uma única TRANSAÇÃO
     if (equipamentosParaCriar && equipamentosParaCriar.length > 0) {
       return prisma.$transaction(async (tx) => {
         const loteCriado = await tx.lote.create({
           data: {
             codigo: data.codigo,
             dataRecebimento: data.dataRecebimento || new Date(),
-            status: data.status || StatusLote.RECEBIDO,
+            status: StatusLote.RECEBIDO,
             organizacaoId: data.organizacaoId,
           },
         });
@@ -63,7 +61,7 @@ export class LoteService {
     return this.repo.create({
       codigo: data.codigo,
       dataRecebimento: data.dataRecebimento || new Date(),
-      status: data.status || StatusLote.RECEBIDO,
+      status: StatusLote.RECEBIDO,
       organizacaoId: data.organizacaoId,
     });
   }
@@ -78,8 +76,11 @@ export class LoteService {
     return this.repo.findAll();
   }
 
-  async atualizar(id: string, data: { codigo?: string; status?: StatusLote; dataRecebimento?: Date }) {
-    await this.buscarPorId(id);
+  async atualizar(id: string, data: { codigo?: string; dataRecebimento?: Date }) {
+    const lote = await this.buscarPorId(id);
+    if (lote.status === StatusLote.CANCELADO) {
+      throw new AppError('Não é possível alterar dados de um lote cancelado.', 422);
+    }
     return this.repo.update(id, data);
   }
 

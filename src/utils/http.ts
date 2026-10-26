@@ -8,13 +8,20 @@ export function responderErro(reply: FastifyReply, err: unknown) {
     return reply.status(err.statusCode).send({ error: err.message });
   }
 
-  // Trata erros que vêm com propriedade statusCode customizada
+  // Trata erros que vêm com propriedade statusCode customizada (ex: 429 Rate Limit ou validações Fastify)
   if (err && typeof err === 'object' && 'statusCode' in err && typeof (err as { statusCode: unknown }).statusCode === 'number') {
-    const errorObj = err as { statusCode: number; message?: string; validation?: unknown };
+    const errorObj = err as { statusCode: number; message?: string; validation?: any[] };
     if (errorObj.statusCode >= 400 && errorObj.statusCode < 500) {
+      const detalhesFormatados = errorObj.validation
+        ? errorObj.validation.map((v: any) => ({
+            campo: v.instancePath?.replace(/^\//, '') || v.params?.missingProperty || 'campo',
+            mensagem: v.message || 'Valor inválido',
+          }))
+        : undefined;
+
       return reply.status(errorObj.statusCode).send({
         error: errorObj.message || 'Erro de requisição inválida.',
-        detalhes: errorObj.validation,
+        detalhes: detalhesFormatados,
       });
     }
   }
