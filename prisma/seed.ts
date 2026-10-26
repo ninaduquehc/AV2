@@ -32,7 +32,6 @@ async function main() {
     },
   });
 
-  // CNPJs válidos calculados
   const orgGeradora = await prisma.organizacao.create({
     data: {
       nome: 'Tech Solutions SA',
@@ -66,7 +65,8 @@ async function main() {
     data: {
       codigoBarrasInterno: 'EQP-100001',
       tipo: 'Notebook',
-      status: StatusEquipamento.RECEBIDO,
+      status: StatusEquipamento.EM_TRIAGEM,
+      version: 1,
       loteId: lote.id,
     },
   });
@@ -76,8 +76,8 @@ async function main() {
       equipamentoId: eq1.id,
       usuarioId: admin.id,
       statusAnterior: StatusEquipamento.RECEBIDO,
-      statusNovo: StatusEquipamento.RECEBIDO,
-      observacao: 'Lote e equipamento recebidos no centro de triagem.',
+      statusNovo: StatusEquipamento.EM_TRIAGEM,
+      observacao: 'Início da triagem no centro de reciclagem.',
     },
   });
 

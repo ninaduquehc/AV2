@@ -1,122 +1,116 @@
 
 # GreenCode API - Logística Reversa de E-Lixo ♻️
 
-API RESTful desenvolvida com **Fastify, TypeScript, Prisma ORM e PostgreSQL/SQLite** para gerenciamento e rastreabilidade da logística reversa de resíduos eletrônicos.
+API RESTful para gestão de logística reversa, rastreabilidade e reciclagem de resíduos eletrônicos.
 
 ## 🚀 Tecnologias
 
-- **Node.js (v20+)** com **TypeScript**
-- **Fastify** — Framework web de alta performance
-- **fastify-type-provider-zod** — Integração de validação e tipagem
-- **Prisma ORM** — Mapeamento objeto-relacional
-- **Zod** — Validação de dados e schemas
-- **Swagger UI / OpenAPI** — Documentação interativa da API
-- **BCrypt** — Hashing de senhas
-- **JWT** — Autenticação e controle de acesso baseado em papéis (RBAC)
+- **Node.js** v20+
+- **TypeScript** e **Fastify**
+- **Prisma ORM** e **PostgreSQL**
+- **Zod** — Validação de dados e schemas OpenAPI
+- **Vitest** — Testes automatizados de integração
+- **Swagger UI** — Documentação interativa da API
+- **Docker Compose** — Gerenciamento do ambiente de desenvolvimento
 
 ## 📋 Pré-requisitos
 
-Antes de executar o projeto, certifique-se de ter instalado:
-
-- [Node.js](https://nodejs.org/) v20 ou superior
+- Node.js v20 ou superior
 - npm
+- Docker
+- Docker Compose
 
-## 🔧 Configuração e Instalação
+## 📦 Como Rodar a Aplicação com Docker
 
-### 1. Clone o repositório
+### 1. Configure as variáveis de ambiente
+
+Clone o repositório e acesse a pasta do projeto:
 
 ```bash
 git clone https://github.com/ninaduquehc/AV2.git
 cd AV2
 ```
 
-### 2. Instale as dependências
+Copie o arquivo de exemplo das variáveis de ambiente:
+
+```bash
+cp .env.example .env
+```
+
+Configure os valores necessários no arquivo `.env`.
+
+### 2. Inicie o banco de dados PostgreSQL
+
+```bash
+docker-compose up -d
+```
+
+### 3. Instale as dependências
 
 ```bash
 npm install
 ```
 
-### 3. Configure as variáveis de ambiente
-
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
-
-```env
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="sua_chave_secreta_aqui"
-PORT=3000
-```
-
-**Importante:** substitua o segredo JWT de exemplo por uma chave forte e mantenha o arquivo `.env` fora do controle de versão.
-
 ### 4. Execute as migrações do banco de dados
 
 ```bash
-npx prisma migrate dev
+npm run migrate
 ```
 
-### 5. Execute o Seed
-
-Para inserir os dados iniciais no banco de dados:
+### 5. Popule o banco de dados
 
 ```bash
-npx prisma db seed
+npm run seed
 ```
 
-### 6. Inicie a aplicação
+### 6. Inicie o servidor
 
 ```bash
 npm run dev
 ```
 
-## 📖 Documentação da API (Swagger)
+## 📖 Documentação da API
 
-Com a aplicação em execução, acesse a documentação interativa para visualizar e testar os endpoints:
+Com a aplicação em execução, acesse a documentação interativa do Swagger:
 
 **Swagger UI:** http://localhost:3000/docs
 
-## 🔐 Usuários Padrão (Seed)
+## 🧪 Rodando os Testes
 
-Após executar o Seed, os seguintes usuários estarão disponíveis, conforme a configuração dos dados iniciais:
+Para executar os testes automatizados:
+
+```bash
+npm test
+```
+
+Os testes utilizam Vitest, conforme a configuração do projeto.
+
+## 🔐 Credenciais Padrão (Seed)
+
+Após executar o Seed, as credenciais abaixo poderão ser utilizadas, caso estejam configuradas nos dados iniciais:
 
 | E-mail | Senha | Perfil |
 |---|---|---|
 | `admin@greencode.com` | `admin123` | `ADMIN` |
 | `operador@greencode.com` | `operador123` | `OPERADOR` |
 
-**Atenção:** as credenciais acima são destinadas ao ambiente de desenvolvimento. Altere as senhas padrão antes de utilizar a aplicação em qualquer ambiente exposto.
+**Atenção:** essas credenciais são destinadas ao ambiente de desenvolvimento. Altere as senhas padrão antes de utilizar a aplicação em ambientes expostos.
 
-## 🔑 Autenticação e Controle de Acesso (RBAC)
+## 🔒 Segurança
 
-A API utiliza **JSON Web Token (JWT)** para autenticação. Nas rotas protegidas, envie o token no cabeçalho HTTP:
+A API implementa mecanismos de autenticação, controle de acesso baseado em papéis (RBAC), proteção contra tentativas de enumeração de usuários e controle de concorrência nas operações de atualização.
 
-```http
-Authorization: Bearer <seu_token_jwt>
-```
+Para conhecer os mecanismos de segurança implementados, consulte o documento [`SEGURANCA.md`](SEGURANCA.md).
 
-O controle de acesso é realizado de acordo com os papéis dos usuários, conforme as permissões definidas na aplicação.
+## 🛠️ Comandos Finais de Validação
 
-## 🗂️ Banco de Dados
-
-O projeto utiliza o Prisma ORM para gerenciar o acesso e as migrações do banco de dados.
-
-A configuração apresentada utiliza SQLite:
-
-```env
-DATABASE_URL="file:./dev.db"
-```
-
-O provedor do banco de dados deve ser compatível com o configurado no arquivo `prisma/schema.prisma`. Caso utilize PostgreSQL, ajuste o provedor e a variável `DATABASE_URL` conforme a configuração do projeto.
-
-## 🧪 Testes
-
-Para executar os testes automatizados, utilize:
+Para iniciar o banco, aplicar as migrações, popular os dados e executar os testes:
 
 ```bash
+docker-compose up -d
+npm run migrate
+npm run seed
 npm test
 ```
 
-Esse comando depende da existência de um script `test` configurado no arquivo `package.json`.
-
-## 📄 Licença
-
-Consulte o arquivo `LICENSE`, caso esteja presente no repositório, para obter informações sobre a licença do projeto.
+**Observação:** os comandos `migrate` e `seed` precisam estar definidos no arquivo `package.json`. O arquivo `.env.example`, o serviço PostgreSQL do Docker Compose e as configurações do Vitest também devem existir no projeto.

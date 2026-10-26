@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { StatusEquipamento, StatusLote } from '@prisma/client';
 
 export const schemaTipoOrg = z.enum(["gerador", "operador_logistico", "desmontadora", "comprador"]);
+export type TipoOrganizacao = z.infer<typeof schemaTipoOrg>;
+
 export const schemaStatusLote = z.nativeEnum(StatusLote);
 export const schemaStatusEquipamento = z.nativeEnum(StatusEquipamento);
 
@@ -10,7 +12,7 @@ export const erroSchema = z.object({
   detalhes: z.array(z.object({
     campo: z.string().optional(),
     mensagem: z.string().optional()
-  })).optional().describe("Detalhamento dos erros de validação ou campo"),
+  })).optional().describe("Detalhamento dos erros de validação"),
 });
 
 export const contratoResumoSchema = z.object({
@@ -29,9 +31,9 @@ export const loteResumoSchema = z.object({
 
 export const organizacaoSchema = z.object({
   id: z.string().uuid(),
-  nome: z.string().describe("Razão social da empresa"),
-  cnpj: z.string().describe("CNPJ formatado sem pontuação"),
-  tipo: schemaTipoOrg.describe("Tipo de atuação na cadeia de e-lixo"),
+  nome: z.string(),
+  cnpj: z.string(),
+  tipo: schemaTipoOrg,
   createdAt: z.string().or(z.date()).optional(),
   updatedAt: z.string().or(z.date()).optional(),
   contrato: contratoResumoSchema.nullable().optional(),
@@ -40,8 +42,8 @@ export const organizacaoSchema = z.object({
 
 export const contratoSchema = z.object({
   id: z.string().uuid(),
-  numeroContrato: z.string().describe("Identificador único do contrato"),
-  clausulas: z.record(z.unknown()).optional().describe("Objeto JSON com cláusulas e metas"),
+  numeroContrato: z.string(),
+  clausulas: z.record(z.unknown()).optional(),
   vigenciaInicio: z.string().or(z.date()),
   vigenciaFim: z.string().or(z.date()),
   organizacaoId: z.string().uuid(),
@@ -49,15 +51,26 @@ export const contratoSchema = z.object({
   organizacao: organizacaoSchema.optional(),
 });
 
+export const movimentacaoSchema = z.object({
+  id: z.string().uuid(),
+  dataHora: z.string().or(z.date()),
+  equipamentoId: z.string().uuid(),
+  usuarioId: z.string().uuid(),
+  statusAnterior: schemaStatusEquipamento,
+  statusNovo: schemaStatusEquipamento,
+  observacao: z.string().nullable().optional(),
+});
+
 export const equipamentoSchema = z.object({
   id: z.string().uuid(),
-  codigoBarrasInterno: z.string().describe("Código de identificação física do item"),
-  tipo: z.string().describe("Tipo de equipamento e-lixo (ex: Notebook, Monitor)"),
+  codigoBarrasInterno: z.string(),
+  tipo: z.string(),
   status: schemaStatusEquipamento,
-  version: z.number().int().describe("Versão incremental para bloqueio otimista"),
+  version: z.number().int(),
   loteId: z.string().uuid(),
   createdAt: z.string().or(z.date()).optional(),
   updatedAt: z.string().or(z.date()).optional(),
+  movimentacoes: z.array(movimentacaoSchema).optional(),
 });
 
 export const loteSchema = z.object({
@@ -70,14 +83,4 @@ export const loteSchema = z.object({
   organizacao: organizacaoSchema.optional(),
   equipamentos: z.array(equipamentoSchema).optional(),
   _count: z.object({ equipamentos: z.number() }).optional(),
-});
-
-export const movimentacaoSchema = z.object({
-  id: z.string().uuid(),
-  dataHora: z.string().or(z.date()),
-  equipamentoId: z.string().uuid(),
-  usuarioId: z.string().uuid(),
-  statusAnterior: schemaStatusEquipamento,
-  statusNovo: schemaStatusEquipamento,
-  observacao: z.string().nullable().optional(),
 });

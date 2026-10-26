@@ -1,22 +1,7 @@
-data/
-*.log
-.greencode-test-data/
-
-
-# Dependências e Builds
 node_modules/
 dist/
-
-# Logs e arquivos do Git/VSCode/Cursor
-.git/
-.vscode/
-
-# Configurações e Skills de Agentes/IA (Cursor, Claude, Devin, etc.)
-.agents/
-.claude/
-.cursor/
-.devin/
 .env
-
-# Arquivos de contexto local
+coverage/
+*.log
+exportar_projeto.bat    
 projeto_completo.txt
