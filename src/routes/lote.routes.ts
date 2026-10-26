@@ -1,7 +1,6 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
-  schemaStatusLote,
   erroSchema,
   loteSchema,
 } from '../schemas/swagger.schemas.js';
@@ -15,10 +14,9 @@ export const loteRoutes: FastifyPluginAsyncZod = async (app) => {
     onRequest: [authenticate, authorize(['ADMIN', 'OPERADOR'])],
     schema: {
       tags: ['Lotes'],
-      summary: 'Criar um novo lote de equipamentos',
+      summary: 'Criar um novo lote de equipamentos (inicia obrigatoriamente como RECEBIDO)',
       body: z.object({
         codigo: z.string().min(1),
-        status: schemaStatusLote.optional(),
         organizacaoId: z.string().uuid(),
         dataRecebimento: z.string().datetime().optional(),
         equipamentos: z

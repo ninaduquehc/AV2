@@ -9,7 +9,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.post('/auth/login', {
     config: {
-      rateLimit: {
+      rateLimit: process.env.NODE_ENV === 'test' ? false : {
         max: 5,
         timeWindow: '1 minute',
       },

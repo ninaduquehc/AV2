@@ -1,8 +1,6 @@
 
 # Diagrama de Classes e Arquitetura - GreenCode API
 
-Este documento apresenta o diagrama de classes e a máquina de estados dos equipamentos da GreenCode API, sistema voltado à gestão de logística reversa e rastreabilidade de resíduos eletrônicos.
-
 ## 1. Diagrama de Classes
 
 ```mermaid
@@ -60,34 +58,24 @@ classDiagram
     Usuario "1" -- "0..*" Movimentacao : registra
 ```
 
-## 2. Máquina de Estados Finita (FSM) dos Equipamentos
-
-A máquina de estados representa as transições permitidas durante o ciclo de rastreabilidade dos equipamentos eletrônicos.
+## 2. Fluxo da Máquina de Estados Finita (FSM) dos Equipamentos
 
 ```mermaid
-stateDiagram-v2
-    [*] --> RECEBIDO
-    RECEBIDO --> EM_TRIAGEM
-
-    EM_TRIAGEM --> EM_DESMONTAGEM
-    EM_TRIAGEM --> PRONTO_REUSO
-
-    EM_DESMONTAGEM --> TESTE_COMPONENTES
-
-    TESTE_COMPONENTES --> PRONTO_REUSO
-    TESTE_COMPONENTES --> PRONTO_DESCARTE
-
-    PRONTO_REUSO --> REUSO
-    PRONTO_DESCARTE --> DESCARTE
-
-    REUSO --> [*]
-    DESCARTE --> [*]
+flowchart TD
+    A[RECEBIDO] --> B[EM_TRIAGEM]
+    B --> C[EM_DESMONTAGEM]
+    B --> D[PRONTO_REUSO]
+    C --> E[TESTE_COMPONENTES]
+    E --> D
+    E --> F[PRONTO_DESCARTE]
+    D --> G[REUSO]
+    F --> H[DESCARTE]
 ```
 
-## 3. Observações
+## 3. Regras da Máquina de Estados
 
-- O diagrama de classes apresenta os principais atributos e relacionamentos do domínio.
-- A máquina de estados descreve o fluxo esperado para o processamento dos equipamentos.
-- As transições devem respeitar as regras de negócio implementadas na API.
-- Tentativas de transição para estados não permitidos devem ser rejeitadas conforme as validações da aplicação.
-- O atributo `version` do equipamento está relacionado ao controle otimista de concorrência, quando implementado na camada de persistência.
+- Os equipamentos devem seguir as transições de status permitidas pela máquina de estados.
+- Transições inválidas devem ser rejeitadas pela API.
+- O status do equipamento deve refletir seu estágio no processo de logística reversa.
+- O histórico de movimentações registra as alterações de status para permitir a rastreabilidade.
+

@@ -1,76 +1,39 @@
 
 # Políticas e Arquitetura de Segurança - GreenCode API
 
-Este documento descreve os mecanismos de segurança utilizados na GreenCode API para proteger a autenticação, controlar o acesso aos recursos e preservar a consistência das operações.
-
 ## 1. Proteção contra Timing Attacks e Brute Force no Login
 
-### Constant Time Lookup
+- **Constant Time Lookup:** utilização de um hash fixo de 60 caracteres (`HASH_FALSO`) no `bcrypt.compare` quando o e-mail informado não está cadastrado, reduzindo diferenças no tempo de resposta e dificultando a enumeração de usuários.
+- **Rate Limiting Estrito no Login:** o endpoint `/auth/login` é limitado a, no máximo, 5 requisições por minuto por endereço IP em ambientes de desenvolvimento e produção.
+- **Ambiente de Testes:** o rate limiting do login é desativado automaticamente quando `NODE_ENV=test`.
+- **Rate Limiting Global:** limite de 100 requisições por minuto por endereço IP para as demais rotas.
 
-A autenticação utiliza `bcrypt.compare` com um hash falso (`HASH_FALSO`) quando o e-mail informado não corresponde a um usuário existente.
+## 2. Bloqueio Otimista (Optimistic Concurrency Control - OCC)
 
-Essa abordagem busca reduzir diferenças no tempo de resposta entre e-mails existentes e inexistentes, dificultando ataques de enumeração de usuários por análise temporal.
+A API utiliza controle otimista de concorrência para prevenir conflitos de escrita e condições de corrida (*race conditions*) durante atualizações concorrentes de equipamentos.
 
-### Rate Limiting no Login
+- A coluna `version` identifica a versão atual do registro.
+- As atualizações verificam a versão esperada antes de modificar o registro.
+- A operação utiliza consultas atômicas com `updateMany({ where: { id, version } })`.
+- Quando uma atualização não pode ser realizada devido a um conflito de concorrência, a API retorna `409 Conflict`.
 
-O endpoint `POST /auth/login` possui limite configurado de até 5 tentativas por minuto por endereço IP, conforme a configuração de segurança informada.
+## 3. Máquina de Estados Finita (FSM) e Validação de Transições
 
-### Rate Limiting Global
+Os equipamentos seguem um fluxo controlado de estados para garantir a rastreabilidade durante o processo de logística reversa.
 
-Os demais endpoints possuem limite global de 100 requisições por minuto por endereço IP.
+- As transições de status devem respeitar as regras definidas pela máquina de estados.
+- Tentativas de transições inválidas, como alterar diretamente de `RECEBIDO` para `DESCARTE`, são rejeitadas com `422 Unprocessable Entity`.
+- Lotes com status `CANCELADO` bloqueiam novas movimentações dos equipamentos vinculados.
 
-O objetivo é reduzir o abuso de requisições e mitigar determinadas tentativas automatizadas de sobrecarga.
+## 4. Segurança de Cabeçalhos HTTP
 
-## 2. Controle Otimista de Concorrência (Optimistic Concurrency Control)
+A aplicação utiliza a biblioteca `@fastify/helmet` para configurar cabeçalhos HTTP de segurança e ajudar a mitigar vulnerabilidades web comuns, incluindo:
 
-A API utiliza controle de versão por meio do atributo `version` para reduzir o risco de condições de corrida (*Race Conditions*) durante atualizações concorrentes de equipamentos.
+- **XSS:** Cross-Site Scripting.
+- **Clickjacking:** tentativas de inserir a aplicação em páginas maliciosas.
+- **MIME Sniffing:** interpretação indevida do tipo de conteúdo pelo navegador.
 
-A estratégia descrita utiliza:
+## 5. Considerações Finais
 
-```typescript
-updateMany({
-    where: {
-        id,
-        version
-    }
-})
-```
+As medidas descritas devem corresponder às configurações efetivamente implementadas na aplicação. Alterações nos mecanismos de autenticação, controle de concorrência, transições de status ou cabeçalhos de segurança devem ser acompanhadas de testes automatizados.
 
-A atualização condicionada ao identificador e à versão esperada permite detectar alterações concorrentes. Se nenhum registro for atualizado, a aplicação deve tratar o caso conforme as regras de negócio.
-
-A operação deve ser executada de maneira compatível com as transações e a estratégia de persistência utilizadas pelo Prisma.
-
-## 3. Máquina de Estados Finita (FSM)
-
-Os equipamentos seguem um fluxo controlado de estados durante o processo de logística reversa.
-
-As transições permitidas devem ser validadas pela aplicação para impedir mudanças incompatíveis com o ciclo de rastreabilidade.
-
-Tentativas de transição ilegal devem retornar `422 Unprocessable Entity`, conforme o comportamento definido para a API.
-
-## 4. Controle de Acesso (RBAC)
-
-O controle de acesso baseado em papéis (*Role-Based Access Control — RBAC*) restringe as operações de acordo com o perfil do usuário autenticado.
-
-Os papéis definidos para o sistema são:
-
-- `ADMIN`
-- `OPERADOR`
-- `CLIENTE`
-
-Cada rota deve aplicar as permissões correspondentes à operação e ao perfil do usuário.
-
-## 5. Boas Práticas de Segurança
-
-- Armazenar segredos e credenciais em variáveis de ambiente.
-- Não versionar arquivos `.env` com informações sensíveis.
-- Utilizar senhas fortes e hashing seguro.
-- Validar os dados recebidos pela API.
-- Aplicar limites de requisições nos endpoints.
-- Restringir o acesso aos recursos conforme as permissões configuradas.
-- Manter as dependências atualizadas.
-- Executar os testes automatizados após alterações nas regras de segurança.
-
-## 6. Considerações Finais
-
-As configurações e os mecanismos documentados devem corresponder à implementação efetiva da aplicação. Recomenda-se validar os limites de requisições, o comportamento de autenticação, as transições de estado e o controle de concorrência por meio de testes automatizados.

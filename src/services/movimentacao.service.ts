@@ -38,10 +38,15 @@ export class MovimentacaoService {
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const equipamento = await tx.equipamento.findUnique({
         where: { id: equipamentoId },
+        include: { lote: true },
       });
 
       if (!equipamento) {
         throw new AppError('Equipamento não encontrado.', 404);
+      }
+
+      if (equipamento.lote.status === StatusLote.CANCELADO) {
+        throw new AppError('Não é possível movimentar equipamentos de um lote cancelado.', 422);
       }
 
       this.validarTransicao(equipamento.status, statusNovo);
@@ -90,10 +95,17 @@ export class MovimentacaoService {
       const ids = itens.map((i) => i.equipamentoId);
       const equipamentos = await tx.equipamento.findMany({
         where: { id: { in: ids } },
+        include: { lote: true },
       });
 
       if (equipamentos.length !== itens.length) {
         throw new AppError('Um ou mais equipamentos informados não foram encontrados.', 404);
+      }
+
+      for (const eq of equipamentos) {
+        if (eq.lote.status === StatusLote.CANCELADO) {
+          throw new AppError(`O equipamento ${eq.codigoBarrasInterno} pertence a um lote cancelado.`, 422);
+        }
       }
 
       const equipMap = new Map(equipamentos.map((e) => [e.id, e]));
@@ -137,6 +149,9 @@ export class MovimentacaoService {
   }
 
   private async sincronizarStatusLote(tx: Prisma.TransactionClient, loteId: string) {
+    const lote = await tx.lote.findUnique({ where: { id: loteId }, select: { status: true } });
+    if (!lote || lote.status === StatusLote.CANCELADO) return;
+
     const equipamentos = await tx.equipamento.findMany({
       where: { loteId },
       select: { status: true },

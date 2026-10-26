@@ -12,7 +12,6 @@ export class EquipamentoService {
   async criar(data: {
     codigoBarrasInterno: string;
     tipo: string;
-    status?: StatusEquipamento;
     loteId: string;
   }) {
     const lote = await this.loteRepo.findById(data.loteId);
@@ -24,7 +23,7 @@ export class EquipamentoService {
     return this.repo.create({
       codigoBarrasInterno: data.codigoBarrasInterno,
       tipo: data.tipo,
-      status: data.status || StatusEquipamento.RECEBIDO,
+      status: StatusEquipamento.RECEBIDO,
       loteId: data.loteId,
     });
   }

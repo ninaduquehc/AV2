@@ -42,10 +42,12 @@ export async function buildApp() {
     origin: process.env.CORS_ORIGIN ? (process.env.CORS_ORIGIN === "*" ? true : process.env.CORS_ORIGIN.split(",")) : true,
   });
 
-  await app.register(rateLimit, {
-    max: 100,
-    timeWindow: '1 minute',
-  });
+  if (process.env.NODE_ENV !== 'test') {
+    await app.register(rateLimit, {
+      max: 100,
+      timeWindow: '1 minute',
+    });
+  }
 
   await app.register(jwt, { secret: jwtSecret });
 
