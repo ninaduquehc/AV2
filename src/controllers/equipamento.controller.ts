@@ -35,4 +35,35 @@ export class EquipamentoController {
       return responderErro(reply, err);
     }
   }
+
+  async show(req: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { id } = req.params as { id: string };
+      const result = await this.service.buscarPorId(id);
+      return reply.send(result);
+    } catch (err) {
+      return responderErro(reply, err);
+    }
+  }
+
+  async update(req: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { id } = req.params as { id: string };
+      const body = req.body as { tipo?: string };
+      const result = await this.service.atualizar(id, body);
+      return reply.send(result);
+    } catch (err) {
+      return responderErro(reply, err);
+    }
+  }
+
+  async delete(req: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { id } = req.params as { id: string };
+      await this.service.remover(id);
+      return reply.status(204).send();
+    } catch (err) {
+      return responderErro(reply, err);
+    }
+  }
 }

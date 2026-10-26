@@ -24,4 +24,15 @@ export class ContratoRepository {
   async findAll() {
     return prisma.contrato.findMany({ include: { organizacao: true } });
   }
+
+  async update(id: string, data: Prisma.ContratoUncheckedUpdateInput) {
+    return prisma.contrato.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async delete(id: string) {
+    return prisma.contrato.delete({ where: { id } });
+  }
 }

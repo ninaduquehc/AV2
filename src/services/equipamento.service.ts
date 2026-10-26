@@ -28,4 +28,19 @@ export class EquipamentoService {
   async listarPaginado(params: { status?: StatusEquipamento; page?: number; limit?: number }) {
     return this.repo.findAll(params);
   }
+
+  async atualizar(id: string, data: { tipo?: string }) {
+    await this.buscarPorId(id);
+    return this.repo.update(id, data);
+  }
+
+  async remover(id: string) {
+    const eq = await this.buscarPorId(id);
+
+    if (eq.status !== 'RECEBIDO' || (eq.movimentacoes && eq.movimentacoes.length > 0)) {
+      throw new AppError('Só é possível remover equipamentos com status RECEBIDO e sem movimentações registradas.', 409);
+    }
+
+    return this.repo.delete(id);
+  }
 }

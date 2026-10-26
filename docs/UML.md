@@ -1,129 +1,67 @@
-# Diagrama de classes — greencode
+# Diagrama de Classes UML & Entidades (AV2)
 
 ```mermaid
 classDiagram
-    class Entidade {
-        <<abstract>>
-        +string id
-        +string criadoEm
-        +regras() string[]
-        +resumo() string
-    }
-
-    class Validavel {
-        <<interface>>
-        +validar() boolean
+    class Usuario {
+        +UUID id
+        +String nome
+        +String email
+        +Role role
+        +String senha
+        +DateTime createdAt
     }
 
     class Organizacao {
-        +string razosocial
-        +string cnpj
+        +UUID id
+        +String nome
+        +String cnpj
         +TipoOrganizacao tipo
-        +nome() string
-        +validar() boolean
-        +regras() string[]
-        +resumo() string
-        +deJSON(dados) Organizacao$
+        +DateTime createdAt
+        +DateTime updatedAt
     }
 
     class Contrato {
-        +string organizacaoId
-        +string dataInicio
-        +string dataFim
-        +string termos
-        +validar() boolean
-        +regras() string[]
-        +resumo() string
-        +deJSON(dados) Contrato$
+        +UUID id
+        +String numeroContrato
+        +Json clausulas
+        +DateTime vigenciaInicio
+        +DateTime vigenciaFim
+        +UUID organizacaoId
+        +DateTime createdAt
     }
 
     class Lote {
-        +string organizacaoId
-        +string notaFiscal
-        +string transportadora
-        +string dataEntrada
-        +validar() boolean
-        +regras() string[]
-        +resumo() string
-        +deJSON(dados) Lote$
+        +UUID id
+        +String codigo
+        +StatusLote status
+        +DateTime dataRecebimento
+        +UUID organizacaoId
+        +DateTime createdAt
     }
 
     class Equipamento {
-        +string loteId
-        +string tipo
-        +string modelo
-        +EstadoFisico estadoFisico
+        +UUID id
+        +String codigoBarrasInterno
+        +String tipo
         +StatusEquipamento status
-        +boolean triagemConcluida
-        +validar() boolean
-        +regras() string[]
-        +resumo() string
-        +deJSON(dados) Equipamento$
+        +Int version
+        +UUID loteId
+        +DateTime createdAt
+        +DateTime updatedAt
     }
 
-    class Movimentacao {
-        +string equipamentoId
-        +string usuario
+    class MovimentacaoEquipamento {
+        +UUID id
+        +DateTime dataHora
+        +UUID equipamentoId
+        +UUID usuarioId
         +StatusEquipamento statusAnterior
         +StatusEquipamento statusNovo
-        +EstadoFisico estadoAnterior
-        +EstadoFisico estadoNovo
-        +string justificativa
-        +regras() string[]
-        +resumo() string
-        +deJSON(dados) Movimentacao$
+        +String observacao
     }
 
-    class FabricaEntidades {
-        <<factory>>
-        +criarOrganizacao(razosocial, cnpj, tipo)$ Organizacao
-        +criarContrato(organizacaoId, inicio, fim, termos)$ Contrato
-        +criarLote(organizacaoId, nf, transp, dataEntrada)$ Lote
-        +criarEquipamento(id, loteId, tipo, modelo, estado)$ Equipamento
-    }
-
-    class RegraDeNegocioError {
-        <<error>>
-    }
-
-    class Repositorio~T~ {
-        -string caminhoArquivo
-        +carregar() T[]
-        +salvar(dados) void
-    }
-
-    Entidade <|-- Organizacao
-    Entidade <|-- Contrato
-    Entidade <|-- Lote
-    Entidade <|-- Equipamento
-    Entidade <|-- Movimentacao
-
-    Validavel <|.. Organizacao
-    Validavel <|.. Contrato
-    Validavel <|.. Lote
-    Validavel <|.. Equipamento
-
-    FabricaEntidades ..> Organizacao : cria
-    FabricaEntidades ..> Contrato : cria
-    FabricaEntidades ..> Lote : cria
-    FabricaEntidades ..> Equipamento : cria
-
-    Organizacao "1" --> "many" Contrato : possui
-    Organizacao "1" --> "many" Lote : possui
-    Lote "1" --> "many" Equipamento : contém
-    Equipamento "1" --> "many" Movimentacao : gera
-
-    Organizacao ..> RegraDeNegocioError : lança
-    Contrato ..> RegraDeNegocioError : lança
-    Lote ..> RegraDeNegocioError : lança
-    Equipamento ..> RegraDeNegocioError : lança
-
-    Repositorio ..> Entidade : persiste
-```
-
-## Onde aparece cada conceito exigido pelo PDF
-- **Herança**: `Entidade` (abstrata) → `Organizacao`, `Contrato`, `Lote`, `Equipamento`, `Movimentacao`.
-- **Interface**: `Validavel`, implementada por `Organizacao`, `Contrato`, `Lote`, `Equipamento`.
-- **Polimorfismo**: cada subclasse implementa `regras()`, `resumo()` e (quando aplicável) `validar()` de forma própria.
-- **Classe abstrata de validação**: `Entidade` define o contrato que toda entidade concreta deve preencher.
-- **Fábrica**: `FabricaEntidades`, responsável por gerar IDs e montar os objetos compostos.
+    Organizacao "1" -- "0..1" Contrato : possui
+    Organizacao "1" -- "0..*" Lote : gera
+    Lote "1" -- "0..*" Equipamento : contem
+    Equipamento "1" -- "0..*" MovimentacaoEquipamento : possui
+    Usuario "1" -- "0..*" MovimentacaoEquipamento : registra

@@ -8,7 +8,7 @@ export class ContratoService {
     private orgRepo = new OrganizacaoRepository()
   ) {}
 
-  async criar(data: { numeroContrato: string; clausulas: any; vigenciaInicio: Date; vigenciaFim: Date; organizacaoId: string }) {
+  async criar(data: { numeroContrato: string; clausulas?: any; vigenciaInicio: Date; vigenciaFim: Date; organizacaoId: string }) {
     if (data.vigenciaFim <= data.vigenciaInicio) {
       throw new AppError('A data de término do contrato deve ser posterior à data de início.', 422);
     }
@@ -22,7 +22,10 @@ export class ContratoService {
     const numeroEmUso = await this.repo.findByNumero(data.numeroContrato);
     if (numeroEmUso) throw new AppError('Já existe um contrato com este número.', 409);
 
-    return this.repo.create(data);
+    return this.repo.create({
+      ...data,
+      clausulas: data.clausulas ?? {},
+    });
   }
 
   async buscarPorId(id: string) {
@@ -33,5 +36,23 @@ export class ContratoService {
 
   async listarTodos() {
     return this.repo.findAll();
+  }
+
+  async atualizar(id: string, data: { numeroContrato?: string; clausulas?: any; vigenciaInicio?: Date; vigenciaFim?: Date }) {
+    const atual = await this.buscarPorId(id);
+
+    const inicio = data.vigenciaInicio || atual.vigenciaInicio;
+    const fim = data.vigenciaFim || atual.vigenciaFim;
+
+    if (fim <= inicio) {
+      throw new AppError('A data de término do contrato deve ser posterior à data de início.', 422);
+    }
+
+    return this.repo.update(id, data);
+  }
+
+  async remover(id: string) {
+    await this.buscarPorId(id);
+    return this.repo.delete(id);
   }
 }

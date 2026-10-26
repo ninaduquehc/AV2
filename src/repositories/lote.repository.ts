@@ -18,4 +18,15 @@ export class LoteRepository {
       include: { organizacao: true, _count: { select: { equipamentos: true } } },
     });
   }
+
+  async update(id: string, data: Prisma.LoteUncheckedUpdateInput) {
+    return prisma.lote.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async delete(id: string) {
+    return prisma.lote.delete({ where: { id } });
+  }
 }
