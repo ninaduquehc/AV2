@@ -43,7 +43,7 @@ export const organizacaoSchema = z.object({
 export const contratoSchema = z.object({
   id: z.string().uuid(),
   numeroContrato: z.string(),
-  clausulas: z.record(z.unknown()).optional(),
+  clausulas: z.record(z.unknown()).nullable().optional(),
   vigenciaInicio: z.string().or(z.date()),
   vigenciaFim: z.string().or(z.date()),
   organizacaoId: z.string().uuid(),

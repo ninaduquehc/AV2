@@ -1,8 +1,33 @@
-import { StatusEquipamento, StatusLote, Movimentacao } from '@prisma/client';
+import { StatusEquipamento, StatusLote, Movimentacao, Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../models/erros.js';
 
+const TRANSICOES: Record<StatusEquipamento, StatusEquipamento[]> = {
+  [StatusEquipamento.RECEBIDO]: [StatusEquipamento.EM_TRIAGEM],
+  [StatusEquipamento.EM_TRIAGEM]: [StatusEquipamento.EM_DESMONTAGEM, StatusEquipamento.PRONTO_REUSO],
+  [StatusEquipamento.EM_DESMONTAGEM]: [StatusEquipamento.TESTE_COMPONENTES],
+  [StatusEquipamento.TESTE_COMPONENTES]: [StatusEquipamento.PRONTO_REUSO, StatusEquipamento.PRONTO_DESCARTE],
+  [StatusEquipamento.PRONTO_REUSO]: [StatusEquipamento.REUSO],
+  [StatusEquipamento.PRONTO_DESCARTE]: [StatusEquipamento.DESCARTE],
+  [StatusEquipamento.REUSO]: [],
+  [StatusEquipamento.DESCARTE]: [],
+};
+
 export class MovimentacaoService {
+  private validarTransicao(statusAtual: StatusEquipamento, statusNovo: StatusEquipamento) {
+    if (statusAtual === statusNovo) {
+      throw new AppError(`O equipamento já se encontra no status ${statusNovo}.`, 422);
+    }
+
+    const permitidos = TRANSICOES[statusAtual] || [];
+    if (!permitidos.includes(statusNovo)) {
+      throw new AppError(
+        `Transição de status inválida: de ${statusAtual} para ${statusNovo}. Transições permitidas a partir de ${statusAtual}: [${permitidos.join(', ')}]`,
+        422
+      );
+    }
+  }
+
   async movimentar(
     equipamentoId: string,
     statusNovo: StatusEquipamento,
@@ -10,7 +35,7 @@ export class MovimentacaoService {
     usuarioId: string,
     observacao?: string
   ) {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const equipamento = await tx.equipamento.findUnique({
         where: { id: equipamentoId },
       });
@@ -19,9 +44,7 @@ export class MovimentacaoService {
         throw new AppError('Equipamento não encontrado.', 404);
       }
 
-      if (equipamento.status === statusNovo) {
-        throw new AppError(`O equipamento já se encontra no status ${statusNovo}.`, 422);
-      }
+      this.validarTransicao(equipamento.status, statusNovo);
 
       const resultado = await tx.equipamento.updateMany({
         where: {
@@ -63,7 +86,7 @@ export class MovimentacaoService {
     usuarioId: string,
     observacao?: string
   ) {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const ids = itens.map((i) => i.equipamentoId);
       const equipamentos = await tx.equipamento.findMany({
         where: { id: { in: ids } },
@@ -74,16 +97,13 @@ export class MovimentacaoService {
       }
 
       const equipMap = new Map(equipamentos.map((e) => [e.id, e]));
-      // Tipagem explícita para evitar o erro de TS (Variable 'movimentacoes' implicitly has 'any[]' type)
       const movimentacoes: Movimentacao[] = [];
       const lotesParaSincronizar = new Set<string>();
 
       for (const item of itens) {
         const equip = equipMap.get(item.equipamentoId)!;
 
-        if (equip.status === statusNovo) {
-          throw new AppError(`O equipamento ${equip.codigoBarrasInterno} já está no status ${statusNovo}.`, 422);
-        }
+        this.validarTransicao(equip.status, statusNovo);
 
         const res = await tx.equipamento.updateMany({
           where: { id: item.equipamentoId, version: item.version },
@@ -116,7 +136,7 @@ export class MovimentacaoService {
     });
   }
 
-  private async sincronizarStatusLote(tx: any, loteId: string) {
+  private async sincronizarStatusLote(tx: Prisma.TransactionClient, loteId: string) {
     const equipamentos = await tx.equipamento.findMany({
       where: { loteId },
       select: { status: true },
@@ -124,9 +144,16 @@ export class MovimentacaoService {
 
     if (equipamentos.length === 0) return;
 
-    const todosEmTriagem = equipamentos.every((e: { status: StatusEquipamento }) => e.status !== StatusEquipamento.RECEBIDO);
+    const todosFinalizados = equipamentos.every(
+      (e) => e.status === StatusEquipamento.DESCARTE || e.status === StatusEquipamento.REUSO
+    );
+    const todosEmTriagemOuAlem = equipamentos.every(
+      (e) => e.status !== StatusEquipamento.RECEBIDO
+    );
 
-    if (todosEmTriagem) {
+    if (todosFinalizados) {
+      await tx.lote.update({ where: { id: loteId }, data: { status: StatusLote.PROCESSADO } });
+    } else if (todosEmTriagemOuAlem) {
       await tx.lote.update({ where: { id: loteId }, data: { status: StatusLote.EM_TRIAGEM } });
     }
   }

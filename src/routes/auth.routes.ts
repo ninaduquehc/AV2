@@ -8,6 +8,12 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   const authController = new AuthController();
 
   app.post('/auth/login', {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: '1 minute',
+      },
+    },
     schema: {
       tags: ['Autenticação'],
       summary: 'Realizar login na aplicação',
@@ -28,6 +34,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
         }),
         400: erroSchema,
         401: erroSchema,
+        429: erroSchema,
       },
     },
   }, (req, reply) => authController.login(req, reply));

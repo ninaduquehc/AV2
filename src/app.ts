@@ -20,6 +20,10 @@ import { appRoutes } from "./routes/index.js";
 import { tratadorDeErros } from "./utils/http.js";
 
 export async function buildApp() {
+  if (!process.env.JWT_SECRET && process.env.NODE_ENV !== "test") {
+    throw new Error("FATAL: A variável de ambiente JWT_SECRET é obrigatória em ambiente de produção/dev.");
+  }
+
   const jwtSecret = process.env.JWT_SECRET || "default_jwt_secret_for_tests_only";
 
   const app = Fastify({ logger: process.env.NODE_ENV !== "test" }).withTypeProvider<ZodTypeProvider>();

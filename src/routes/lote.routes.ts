@@ -74,11 +74,10 @@ export const loteRoutes: FastifyPluginAsyncZod = async (app) => {
     onRequest: [authenticate, authorize(['ADMIN', 'OPERADOR'])],
     schema: {
       tags: ['Lotes'],
-      summary: 'Atualizar lote',
+      summary: 'Atualizar código do lote',
       params: z.object({ id: z.string().uuid() }),
       body: z.object({
         codigo: z.string().optional(),
-        status: schemaStatusLote.optional(),
         dataRecebimento: z.string().datetime().optional(),
       }),
       response: {

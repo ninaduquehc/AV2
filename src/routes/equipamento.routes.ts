@@ -15,11 +15,10 @@ export const equipamentoRoutes: FastifyPluginAsyncZod = async (app) => {
     onRequest: [authenticate, authorize(['ADMIN', 'OPERADOR'])],
     schema: {
       tags: ['Equipamentos'],
-      summary: 'Cadastrar um novo equipamento',
+      summary: 'Cadastrar um novo equipamento (inicia obrigatoriamente como RECEBIDO)',
       body: z.object({
         codigoBarrasInterno: z.string().min(1),
         tipo: z.string().min(1),
-        status: schemaStatusEquipamento.optional(),
         loteId: z.string().uuid(),
       }),
       response: {
