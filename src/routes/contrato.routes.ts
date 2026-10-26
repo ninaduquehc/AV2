@@ -102,4 +102,37 @@ export const contratoRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
   }, (req, reply) => contratoController.delete(req, reply));
+
+    app.get('/contratos/:id/faturamento', {
+    onRequest: [authenticate, authorize(['ADMIN', 'OPERADOR'])],
+    schema: {
+      tags: ['Contratos'],
+      summary: 'Calcular estimativa de faturamento (base mensal + tarifa por kg)',
+      params: z.object({ id: z.string().uuid() }),
+      querystring: z.object({
+        pesoTotalKg: z
+          .string()
+          .regex(/^\d+(\.\d+)?$/, 'Informe um número positivo')
+          .transform(Number),
+      }),
+      response: {
+        200: z.object({
+          contratoId: z.string().uuid(),
+          numeroContrato: z.string(),
+          pesoTotalKg: z.number(),
+          valorBase: z.number(),
+          tarifaPorKg: z.number(),
+          valorVariavel: z.number(),
+          totalEstimado: z.number(),
+          multaPercentual: z.number(),
+          multaPotencial: z.number(),
+        }),
+        400: erroSchema,
+        401: erroSchema,
+        403: erroSchema,
+        404: erroSchema,
+        500: erroSchema,
+      },
+    },
+  }, (req, reply) => contratoController.faturamento(req, reply));
 };

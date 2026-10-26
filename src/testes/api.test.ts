@@ -171,8 +171,77 @@ describe('GreenCode API - Suíte Completa de Testes e Regras de Negócio', () =>
     ]);
 
     const statusCodes = [req1.statusCode, req2.statusCode].sort();
-    
+
     // Uma deve ser processada com sucesso (201) e a outra barrada por conflito de versão (409)
     expect(statusCodes).toEqual([201, 409]);
+  });
+
+  it('Autenticação (401): Deve rejeitar acesso sem token', async () => {
+    const res = await app.inject({ method: 'GET', url: '/organizacoes' });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('Autenticação (401): Deve rejeitar login com senha incorreta', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'admin@greencode.com', senha: 'senha-errada' },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('Validação (400): Deve rejeitar organização com CNPJ inválido', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/organizacoes',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { nome: 'Empresa Teste', cnpj: '11111111111111', tipo: 'gerador' },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toHaveProperty('detalhes');
+  });
+
+  it('FSM (422): Deve rejeitar transição inválida de RECEBIDO para DESCARTE', async () => {
+    const loteRes = await app.inject({
+      method: 'POST',
+      url: '/lotes',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { codigo: `LOT-FSM-${Date.now()}`, organizacaoId },
+    });
+
+    const eqRes = await app.inject({
+      method: 'POST',
+      url: '/equipamentos',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { codigoBarrasInterno: `EQP-FSM-${Date.now()}`, tipo: 'Impressora', loteId: loteRes.json().id },
+    });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/movimentacoes',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+      payload: { equipamentoId: eqRes.json().id, statusNovo: 'DESCARTE', version: 0 },
+    });
+
+    expect(res.statusCode).toBe(422);
+    expect(res.json().error).toContain('Transição de status inválida');
+  });
+
+  it('Contrato (200): Deve calcular a estimativa de faturamento', async () => {
+    const contratosRes = await app.inject({
+      method: 'GET',
+      url: '/contratos',
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+    });
+    const contrato = contratosRes.json().find((c: { numeroContrato: string }) => c.numeroContrato === 'CTR-2026-001');
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/contratos/${contrato.id}/faturamento?pesoTotalKg=100`,
+      headers: { authorization: `Bearer ${tokenAdmin}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().totalEstimado).toBe(15450);
   });
 });

@@ -6,7 +6,7 @@ export class ContratoService {
   constructor(
     private repo = new ContratoRepository(),
     private orgRepo = new OrganizacaoRepository()
-  ) {}
+  ) { }
 
   async criar(data: { numeroContrato: string; clausulas?: any; vigenciaInicio: Date; vigenciaFim: Date; organizacaoId: string }) {
     if (data.vigenciaFim <= data.vigenciaInicio) {
@@ -57,15 +57,20 @@ export class ContratoService {
   }
 
   // Método de Cálculo Financeiro do Contrato
+  // Método de Cálculo Financeiro do Contrato
   async calcularEstimativaFaturamento(id: string, pesoTotalKg: number) {
     const contrato = await this.buscarPorId(id);
-    const clausulas = (contrato.clausulas as Record<string, number>) || {};
+    const clausulas = (contrato.clausulas ?? {}) as Record<string, unknown>;
 
-    const valorBase = clausulas.valorBaseMensal || 0;
-    const tarifaPorKg = clausulas.tarifaPorKgResíduo || 0;
+    const arredondar = (n: number) => Math.round(n * 100) / 100;
 
-    const valorVariavel = pesoTotalKg * tarifaPorKg;
-    const totalEstimado = valorBase + valorVariavel;
+    const valorBase = Number(clausulas.valorBaseMensal) || 0;
+    const tarifaPorKg = Number(clausulas.tarifaPorKgResiduo) || 0;
+    const multaPercentual = Number(clausulas.multaDescumprimentoPercentual) || 0;
+
+    const valorVariavel = arredondar(pesoTotalKg * tarifaPorKg);
+    const totalEstimado = arredondar(valorBase + valorVariavel);
+    const multaPotencial = arredondar(totalEstimado * (multaPercentual / 100));
 
     return {
       contratoId: contrato.id,
@@ -75,6 +80,8 @@ export class ContratoService {
       tarifaPorKg,
       valorVariavel,
       totalEstimado,
+      multaPercentual,
+      multaPotencial,
     };
   }
 }

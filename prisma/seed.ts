@@ -42,7 +42,7 @@ async function main() {
   const orgGeradora = await prisma.organizacao.create({
     data: {
       nome: 'Tech Solutions SA',
-      cnpj: '11222333000181',
+      cnpj: '11222333000262',
       tipo: TipoOrganizacao.gerador,
     },
   });
@@ -64,7 +64,7 @@ async function main() {
       organizacaoId: orgGeradora.id,
       clausulas: {
         valorBaseMensal: 15000.00,
-        tarifaPorKgResíduo: 4.50,
+        tarifaPorKgResiduo: 4.50,
         metaReciclagemPorcentagem: 95,
         multaDescumprimentoPercentual: 5.0,
       },

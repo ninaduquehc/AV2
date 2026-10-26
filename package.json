@@ -41,5 +41,8 @@
     "type": "git",
     "url": "git+https://github.com/ninaduquehc/AV2.git"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "config": {
+    "id": "gc-av2-marina-r3c1cl4"
+  }
 }

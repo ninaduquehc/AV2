@@ -22,7 +22,7 @@ API RESTful para gestão de logística reversa, rastreabilidade e reciclagem de 
 - **Controle de Concorrência Otimista (OCC):** prevenção de *race conditions* e edições simultâneas através do versionamento atômico (`version`).
 - **Autenticação e RBAC:** controle de acesso baseado em perfis (`ADMIN`, `OPERADOR`, `CLIENTE`) via tokens JWT stateless.
 - **Rastreabilidade e Auditoria:** histórico de movimentações por equipamento com proteção por chave estrangeira `Restrict`.
-- **Cálculo Financeiro de Contratos:** módulo para estimativa de faturamento com base em tarifas fixas, variáveis por quilograma e multas contratuais.
+- **Cálculo Financeiro de Contratos:** estimativa de faturamento (valor base mensal + tarifa por kg + multa potencial) pela rota `GET /contratos/:id/faturamento?pesoTotalKg=100`, disponível para `ADMIN` e `OPERADOR`.
 - **Resiliência:** tratamento centralizado de exceções, *rate limiting* contra ataques de força bruta e suporte a *Graceful Shutdown* (`SIGINT`/`SIGTERM`).
 
 ---
@@ -117,7 +117,7 @@ Para executar a suíte de testes de integração com Vitest, utilize:
 npm test
 ```
 
-Os testes cobrem autenticação, RBAC, FSM, concorrência com `Promise.all` e validações Zod.
+Os testes cobrem autenticação (401), RBAC (403), validações Zod (400), FSM (422), regras de negócio e concorrência otimista (409), movimentação em massa e cálculo de faturamento. Eles usam os dados do seed, então rode `npm run seed` antes.
 
 ---
 

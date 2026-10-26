@@ -3,7 +3,7 @@ import { ContratoService } from '../services/contrato.service.js';
 import { responderErro } from '../utils/http.js';
 
 export class ContratoController {
-  constructor(private service = new ContratoService()) {}
+  constructor(private service = new ContratoService()) { }
 
   async create(req: FastifyRequest, reply: FastifyReply) {
     try {
@@ -77,6 +77,17 @@ export class ContratoController {
       const { id } = req.params as { id: string };
       await this.service.remover(id);
       return reply.status(204).send();
+    } catch (err) {
+      return responderErro(reply, err);
+    }
+  }
+
+  async faturamento(req: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { id } = req.params as { id: string };
+      const { pesoTotalKg } = req.query as { pesoTotalKg: number };
+      const result = await this.service.calcularEstimativaFaturamento(id, pesoTotalKg);
+      return reply.send(result);
     } catch (err) {
       return responderErro(reply, err);
     }

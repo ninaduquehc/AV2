@@ -49,6 +49,13 @@ export class MovimentacaoService {
         throw new AppError('Não é possível movimentar equipamentos de um lote cancelado.', 422);
       }
 
+      if (equipamento.version !== version) {
+        throw new AppError(
+          'Conflito de concorrência: o equipamento foi modificado por outro usuário ou a versão informada é inválida.',
+          409
+        );
+      }
+
       this.validarTransicao(equipamento.status, statusNovo);
 
       const resultado = await tx.equipamento.updateMany({
@@ -114,6 +121,10 @@ export class MovimentacaoService {
 
       for (const item of itens) {
         const equip = equipMap.get(item.equipamentoId)!;
+
+        if (equip.version !== item.version) {
+          throw new AppError(`Conflito de concorrência no equipamento ${equip.codigoBarrasInterno}.`, 409);
+        }
 
         this.validarTransicao(equip.status, statusNovo);
 
