@@ -1,5 +1,3 @@
-export class RegraDeNegocioError extends Error {}
-
 export class AppError extends Error {
   constructor(
     public readonly message: string,

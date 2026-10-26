@@ -1,6 +1,5 @@
 import { prisma } from '../lib/prisma.js';
 import { Prisma, StatusEquipamento } from '@prisma/client';
-import { ConflitoDeVersaoError } from '../models/erros.js';
 
 export class EquipamentoRepository {
   async create(data: Prisma.EquipamentoUncheckedCreateInput) {
@@ -48,34 +47,5 @@ export class EquipamentoRepository {
 
   async delete(id: string) {
     return prisma.equipamento.delete({ where: { id } });
-  }
-
-  // Atualização com bloqueio otimista lançando ConflitoDeVersaoError
-  async updateWithVersion(
-    id: string,
-    currentVersion: number,
-    data: Prisma.EquipamentoUpdateInput,
-    tx?: Prisma.TransactionClient
-  ) {
-    const client = tx || prisma;
-
-    const updated = await client.equipamento.updateMany({
-      where: {
-        id,
-        version: currentVersion,
-      },
-      data: {
-        ...data,
-        version: {
-          increment: 1,
-        },
-      },
-    });
-
-    if (updated.count === 0) {
-      throw new ConflitoDeVersaoError();
-    }
-
-    return client.equipamento.findUnique({ where: { id } });
   }
 }

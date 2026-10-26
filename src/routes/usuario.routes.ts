@@ -1,13 +1,9 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { Role } from '@prisma/client';
 import { UsuarioController } from '../controllers/usuario.controller.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
-
-const erroSchema = z.object({
-  error: z.string(),
-  detalhes: z.array(z.object({ campo: z.string().optional(), mensagem: z.string().optional() })).optional(),
-});
+import { erroSchema } from '../schemas/swagger.schemas.js';
 
 const usuarioSchema = z.object({
   id: z.string().uuid(),
@@ -17,7 +13,7 @@ const usuarioSchema = z.object({
   createdAt: z.string().or(z.date()).optional(),
 });
 
-export async function usuarioRoutes(app: FastifyInstance) {
+export const usuarioRoutes: FastifyPluginAsyncZod = async (app) => {
   const usuarioController = new UsuarioController();
 
   app.post('/usuarios', {
@@ -25,7 +21,6 @@ export async function usuarioRoutes(app: FastifyInstance) {
     schema: {
       tags: ['Usuários'],
       summary: 'Cadastrar um novo usuário (Apenas Admin)',
-      security: [{ bearerAuth: [] }],
       body: z.object({
         nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
         email: z.string().email('E-mail em formato inválido'),
@@ -47,7 +42,6 @@ export async function usuarioRoutes(app: FastifyInstance) {
     schema: {
       tags: ['Usuários'],
       summary: 'Listar todos os usuários cadastrados',
-      security: [{ bearerAuth: [] }],
       response: {
         200: z.array(usuarioSchema),
         401: erroSchema,
@@ -61,7 +55,6 @@ export async function usuarioRoutes(app: FastifyInstance) {
     schema: {
       tags: ['Usuários'],
       summary: 'Remover um usuário por ID',
-      security: [{ bearerAuth: [] }],
       params: z.object({ id: z.string().uuid() }),
       response: {
         204: z.null(),
@@ -71,4 +64,4 @@ export async function usuarioRoutes(app: FastifyInstance) {
       },
     },
   }, (req, reply) => usuarioController.delete(req, reply));
-}
+};
