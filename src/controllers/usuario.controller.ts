@@ -72,6 +72,11 @@ export class UsuarioController {
     try {
       const { id } = req.params as { id: string };
 
+      // Regra de segurança: impede auto-exclusão do usuário logado
+      if (req.user && req.user.sub === id) {
+        throw new AppError('Operação não permitida: você não pode remover seu próprio usuário.', 403);
+      }
+
       const usuario = await prisma.usuario.findUnique({ where: { id } });
       if (!usuario) {
         throw new AppError('Usuário não encontrado.', 404);

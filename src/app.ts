@@ -45,16 +45,33 @@ await app.register(swagger, {
       description: "API RESTful para gestão de logística reversa e rastreabilidade de e-lixo.",
       version: "1.0.0",
     },
+    servers: [
+      {
+        url: "http://localhost:3000",
+        description: "Servidor Local de Desenvolvimento",
+      },
+    ],
+    tags: [
+      { name: "Autenticação", description: "Endpoints para emissão e validação de tokens JWT" },
+      { name: "Usuários", description: "Gestão de usuários do sistema (Apenas Administradores)" },
+      { name: "Organizações", description: "Cadastro de empresas parceiras, geradoras e desmontadoras" },
+      { name: "Contratos", description: "Acordos e metas vinculados às organizações" },
+      { name: "Lotes", description: "Lotes de recolhimento de resíduos eletrônicos" },
+      { name: "Equipamentos", description: "Itens individuais triados e acompanhados no fluxo" },
+      { name: "Movimentações", description: "Rastreabilidade e histórico de alterações com bloqueio otimista" },
+      { name: "Health", description: "Verificação da saúde e funcionamento da API" },
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
-          description: "Informe o token retornado por POST /auth/login",
+          description: "Informe o token JWT retornado no login",
         },
       },
     },
+    security: [{ bearerAuth: [] }],
   },
   transform: createJsonSchemaTransform({ skipList: [] }),
 });
@@ -72,6 +89,7 @@ app.get("/health", {
   schema: {
     tags: ["Health"],
     summary: "Verificar integridade da aplicação",
+    security: [],
     response: {
       200: z.object({ status: z.string(), timestamp: z.string() }),
     },

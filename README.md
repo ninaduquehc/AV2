@@ -1,219 +1,122 @@
 
-# GreenCode API — Gestão de Logística Reversa de E-Lixo ♻️
+# GreenCode API - Logística Reversa de E-Lixo ♻️
 
-API RESTful desenvolvida com **Fastify, TypeScript, Prisma ORM, Zod e PostgreSQL** para a gestão de logística reversa, rastreabilidade de resíduos eletrônicos e controle de contratos entre organizações geradoras e operadoras.
+API RESTful desenvolvida com **Fastify, TypeScript, Prisma ORM e PostgreSQL/SQLite** para gerenciamento e rastreabilidade da logística reversa de resíduos eletrônicos.
 
----
+## 🚀 Tecnologias
 
-## 🚀 Tecnologias Utilizadas
-
-- **Node.js (v18+)** — Ambiente de execução JavaScript.
-- **TypeScript** — Tipagem estática.
-- **Fastify** — Framework web de alta performance.
-- **Prisma ORM** — Modelagem e manipulação do banco de dados.
-- **Zod** — Validação de dados.
-- **fastify-type-provider-zod** — Integração de validação e tipagem no Fastify.
-- **PostgreSQL** — Banco de dados relacional.
-- **Swagger / OpenAPI 3.0** — Documentação interativa da API.
-- **JWT (JSON Web Token)** — Autenticação de usuários.
-- **Bcrypt** — Hashing seguro de senhas.
-- **Jest** — Testes automatizados.
-
----
-
-## 🔐 Autenticação e Controle de Acesso (RBAC)
-
-A API utiliza autenticação por **JSON Web Token (JWT)**. Para acessar as rotas protegidas, envie o token no cabeçalho HTTP:
-
-```http
-Authorization: Bearer <seu_token_jwt>
-```
-
-### Papéis de usuário
-
-O controle de acesso é baseado em papéis (*Role-Based Access Control — RBAC*).
-
-| Papel | Permissões |
-|---|---|
-| `ADMIN` | Acesso administrativo, incluindo CRUD de usuários, contratos e organizações, além das operações de exclusão autorizadas. |
-| `OPERADOR` | Cadastro e atualização de lotes e equipamentos, além do registro de movimentações. |
-| `CLIENTE` | Acesso de leitura para consultas e rastreabilidade das informações autorizadas. |
-
-As permissões efetivas dependem das regras de autorização configuradas nas rotas da aplicação.
-
----
+- **Node.js (v20+)** com **TypeScript**
+- **Fastify** — Framework web de alta performance
+- **fastify-type-provider-zod** — Integração de validação e tipagem
+- **Prisma ORM** — Mapeamento objeto-relacional
+- **Zod** — Validação de dados e schemas
+- **Swagger UI / OpenAPI** — Documentação interativa da API
+- **BCrypt** — Hashing de senhas
+- **JWT** — Autenticação e controle de acesso baseado em papéis (RBAC)
 
 ## 📋 Pré-requisitos
 
 Antes de executar o projeto, certifique-se de ter instalado:
 
-- [Node.js](https://nodejs.org/)
+- [Node.js](https://nodejs.org/) v20 ou superior
 - npm
-- [PostgreSQL](https://www.postgresql.org/)
-- Git
 
----
+## 🔧 Configuração e Instalação
 
-## ⚙️ Configuração do Ambiente
-
-### 1. Clonar o repositório
+### 1. Clone o repositório
 
 ```bash
-git clone <URL_DO_REPOSITORIO>
-cd <NOME_DO_REPOSITORIO>
+git clone https://github.com/ninaduquehc/AV2.git
+cd AV2
 ```
 
-Substitua os valores entre `< >` pelo endereço e nome reais do repositório.
-
-### 2. Instalar as dependências
+### 2. Instale as dependências
 
 ```bash
 npm install
 ```
 
-### 3. Configurar as variáveis de ambiente
+### 3. Configure as variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto, utilizando o `.env.example` como referência.
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
-Exemplo de configuração:
-
-```ini
+```env
+DATABASE_URL="file:./dev.db"
+JWT_SECRET="sua_chave_secreta_aqui"
 PORT=3000
-HOST=0.0.0.0
-JWT_SECRET=sua_chave_secreta_jwt_longa
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/greencode_db?schema=public"
-CORS_ORIGIN="*"
 ```
 
-**Importante:**
+**Importante:** substitua o segredo JWT de exemplo por uma chave forte e mantenha o arquivo `.env` fora do controle de versão.
 
-- Substitua as credenciais do banco de dados pelos valores do seu ambiente.
-- Utilize um segredo JWT forte e exclusivo.
-- Não compartilhe nem versione o arquivo `.env`.
-- Em produção, configure o CORS para permitir somente as origens autorizadas.
-
-### 4. Configurar o banco de dados
-
-Com o PostgreSQL em execução e a variável `DATABASE_URL` configurada, execute as migrações do Prisma:
+### 4. Execute as migrações do banco de dados
 
 ```bash
 npx prisma migrate dev
 ```
 
-Para popular o banco com os dados iniciais, execute:
+### 5. Execute o Seed
+
+Para inserir os dados iniciais no banco de dados:
 
 ```bash
 npx prisma db seed
 ```
 
-A execução do *seed* depende de sua configuração no projeto.
-
----
-
-## 🛠️ Executando a Aplicação
-
-### Modo de desenvolvimento
+### 6. Inicie a aplicação
 
 ```bash
 npm run dev
 ```
 
-### Interface CLI
+## 📖 Documentação da API (Swagger)
 
-```bash
-npm run cli
+Com a aplicação em execução, acesse a documentação interativa para visualizar e testar os endpoints:
+
+**Swagger UI:** http://localhost:3000/docs
+
+## 🔐 Usuários Padrão (Seed)
+
+Após executar o Seed, os seguintes usuários estarão disponíveis, conforme a configuração dos dados iniciais:
+
+| E-mail | Senha | Perfil |
+|---|---|---|
+| `admin@greencode.com` | `admin123` | `ADMIN` |
+| `operador@greencode.com` | `operador123` | `OPERADOR` |
+
+**Atenção:** as credenciais acima são destinadas ao ambiente de desenvolvimento. Altere as senhas padrão antes de utilizar a aplicação em qualquer ambiente exposto.
+
+## 🔑 Autenticação e Controle de Acesso (RBAC)
+
+A API utiliza **JSON Web Token (JWT)** para autenticação. Nas rotas protegidas, envie o token no cabeçalho HTTP:
+
+```http
+Authorization: Bearer <seu_token_jwt>
 ```
 
-Os comandos dependem dos scripts configurados no arquivo `package.json`.
+O controle de acesso é realizado de acordo com os papéis dos usuários, conforme as permissões definidas na aplicação.
 
----
+## 🗂️ Banco de Dados
 
-## 📚 Documentação da API
+O projeto utiliza o Prisma ORM para gerenciar o acesso e as migrações do banco de dados.
 
-Com a aplicação em execução, acesse:
+A configuração apresentada utiliza SQLite:
 
-- **Swagger UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
-- **Health Check:** [http://localhost:3000/health](http://localhost:3000/health)
+```env
+DATABASE_URL="file:./dev.db"
+```
 
-A documentação Swagger permite visualizar os endpoints, consultar os schemas e testar as requisições disponíveis.
+O provedor do banco de dados deve ser compatível com o configurado no arquivo `prisma/schema.prisma`. Caso utilize PostgreSQL, ajuste o provedor e a variável `DATABASE_URL` conforme a configuração do projeto.
 
----
+## 🧪 Testes
 
-## 🧪 Testes Automatizados
-
-Para executar os testes automatizados configurados no projeto, utilize:
+Para executar os testes automatizados, utilize:
 
 ```bash
 npm test
 ```
 
-Os testes podem abranger funcionalidades unitárias e de integração, conforme a implementação existente.
-
----
-
-## 📐 Estrutura do Projeto
-
-```text
-src/
-├── controllers/    # Controle das requisições e respostas HTTP
-├── services/       # Regras de negócio e operações da aplicação
-├── repositories/   # Acesso aos dados por meio do Prisma
-├── routes/         # Rotas e schemas de validação Zod/Swagger
-├── middlewares/    # Autenticação JWT e controle de acesso RBAC
-├── models/         # Classes e modelos de erro personalizados
-├── utils/          # Funções utilitárias e tratamento de erros
-├── lib/            # Instâncias compartilhadas, como o Prisma Client
-├── app.ts          # Configuração do Fastify e de seus plugins
-└── server.ts       # Inicialização do servidor e encerramento controlado
-```
-
----
-
-## 🔄 Funcionalidades Principais
-
-- Autenticação de usuários com JWT.
-- Controle de permissões baseado em papéis (RBAC).
-- Gerenciamento de organizações.
-- Gerenciamento de contratos.
-- Cadastro e atualização de lotes de resíduos eletrônicos.
-- Cadastro e atualização de equipamentos.
-- Registro de movimentações para rastreabilidade.
-- Persistência de dados em PostgreSQL com Prisma ORM.
-- Validação de dados utilizando Zod.
-- Documentação interativa com Swagger.
-- Testes automatizados com Jest.
-- Verificação de disponibilidade por meio do endpoint de health check.
-- Interface de linha de comando (CLI).
-
-*Observação: a disponibilidade e o comportamento de cada funcionalidade dependem da implementação atual da API.*
-
----
-
-## 🔒 Boas Práticas de Segurança
-
-- Armazene segredos e credenciais em variáveis de ambiente.
-- Não versione arquivos `.env` nem exponha tokens JWT.
-- Armazene senhas utilizando hashing seguro, nunca em texto puro.
-- Valide os dados de entrada antes de processá-los.
-- Restrinja o acesso aos endpoints conforme o papel do usuário.
-- Configure o CORS de acordo com os ambientes autorizados.
-- Utilize HTTPS em ambientes de produção.
-- Mantenha as dependências atualizadas.
-
----
-
-## 👥 Contribuição
-
-Para contribuir com o projeto:
-
-1. Crie uma branch para sua alteração.
-2. Implemente a funcionalidade ou correção.
-3. Execute os testes automatizados.
-4. Verifique se a aplicação inicia corretamente.
-5. Envie suas alterações por meio de um Pull Request.
-
----
+Esse comando depende da existência de um script `test` configurado no arquivo `package.json`.
 
 ## 📄 Licença
 
-Consulte o arquivo `LICENSE`, caso exista no repositório, para obter informações sobre a licença do projeto.
+Consulte o arquivo `LICENSE`, caso esteja presente no repositório, para obter informações sobre a licença do projeto.

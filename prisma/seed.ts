@@ -1,22 +1,9 @@
-import 'dotenv/config';
 import { PrismaClient, Role, StatusLote, StatusEquipamento } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Seed recusado: ele apaga todos os dados e não pode rodar em produção.');
-  }
-
-  const senhaSeed = process.env.SEED_PASSWORD;
-  if (!senhaSeed || senhaSeed.length < 8) {
-    throw new Error('Defina SEED_PASSWORD (mín. 8 caracteres) no arquivo .env antes de rodar o seed.');
-  }
-
-  console.log('🌱 Iniciando o seed do banco de dados...');
-
-  // Limpa os dados existentes (ordem respeitando as chaves estrangeiras)
   await prisma.movimentacao.deleteMany();
   await prisma.equipamento.deleteMany();
   await prisma.lote.deleteMany();
@@ -24,90 +11,82 @@ async function main() {
   await prisma.organizacao.deleteMany();
   await prisma.usuario.deleteMany();
 
-  const senhaHash = await bcrypt.hash(senhaSeed, 10);
+  const senhaAdmin = await bcrypt.hash('admin123', 10);
+  const senhaOperador = await bcrypt.hash('operador123', 10);
 
-  await prisma.usuario.create({
+  const admin = await prisma.usuario.create({
     data: {
       nome: 'Administrador GreenCode',
       email: 'admin@greencode.com',
-      senha: senhaHash,
+      senha: senhaAdmin,
       role: Role.ADMIN,
     },
   });
 
-  const operador = await prisma.usuario.create({
+  await prisma.usuario.create({
     data: {
-      nome: 'Operador de Triagem',
+      nome: 'Operador Logístico',
       email: 'operador@greencode.com',
-      senha: senhaHash,
+      senha: senhaOperador,
       role: Role.OPERADOR,
     },
   });
 
-  console.log('✅ Usuários criados com sucesso!');
-
-  const orgTech = await prisma.organizacao.create({
+  // CNPJs válidos calculados
+  const orgGeradora = await prisma.organizacao.create({
     data: {
-      nome: 'TechCorp Soluções S.A.',
-      cnpj: '12345678000190',
+      nome: 'Tech Solutions SA',
+      cnpj: '11222333000181',
       tipo: 'gerador',
-      contrato: {
-        create: {
-          numeroContrato: 'CT-2026-001',
-          clausulas: { reciclagemMinima: '80%', prazoDias: 30 },
-          vigenciaInicio: new Date('2026-01-01'),
-          vigenciaFim: new Date('2026-12-31'),
-        },
-      },
     },
   });
 
-  console.log('✅ Organização e Contrato criados!');
+  await prisma.contrato.create({
+    data: {
+      numeroContrato: 'CTR-2026-001',
+      vigenciaInicio: new Date('2026-01-01'),
+      vigenciaFim: new Date('2026-12-31'),
+      organizacaoId: orgGeradora.id,
+      clausulas: {
+        metaReciclagem: '95%',
+        penalidadeAtraso: '0.5% ao dia',
+      },
+    },
+  });
 
   const lote = await prisma.lote.create({
     data: {
-      codigo: 'LOTE-2026-001',
-      status: StatusLote.EM_TRIAGEM,
-      organizacaoId: orgTech.id,
-      equipamentos: {
-        create: [
-          {
-            codigoBarrasInterno: 'EQ-NOTE-001',
-            tipo: 'Notebook',
-            status: StatusEquipamento.EM_TRIAGEM,
-            version: 1,
-          },
-          {
-            codigoBarrasInterno: 'EQ-DESK-002',
-            tipo: 'Desktop',
-            status: StatusEquipamento.RECEBIDO,
-            version: 1,
-          },
-        ],
-      },
+      codigo: 'LOT-2026-001',
+      status: StatusLote.RECEBIDO,
+      organizacaoId: orgGeradora.id,
     },
-    include: { equipamentos: true },
   });
 
-  console.log('✅ Lote e Equipamentos criados!');
+  const eq1 = await prisma.equipamento.create({
+    data: {
+      codigoBarrasInterno: 'EQP-100001',
+      tipo: 'Notebook',
+      status: StatusEquipamento.RECEBIDO,
+      loteId: lote.id,
+    },
+  });
 
   await prisma.movimentacao.create({
     data: {
+      equipamentoId: eq1.id,
+      usuarioId: admin.id,
       statusAnterior: StatusEquipamento.RECEBIDO,
-      statusNovo: StatusEquipamento.EM_TRIAGEM,
-      observacao: 'Equipamento recebido no centro de triagem e iniciado o processo de testes.',
-      equipamentoId: lote.equipamentos[0].id,
-      usuarioId: operador.id,
+      statusNovo: StatusEquipamento.RECEBIDO,
+      observacao: 'Lote e equipamento recebidos no centro de triagem.',
     },
   });
 
-  console.log('✅ Movimentação de teste registrada!');
-  console.log('🚀 Seed concluído com sucesso!');
+  console.log('Seed concluído com sucesso!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erro durante o seed:', e.message);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

@@ -1,26 +1,30 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { MovimentacaoService } from '../services/movimentacao.service.js';
 import { StatusEquipamento } from '@prisma/client';
+import { MovimentacaoService } from '../services/movimentacao.service.js';
 import { responderErro } from '../utils/http.js';
 
 export class MovimentacaoController {
-  constructor(private service = new MovimentacaoService()) {}
+  private service = new MovimentacaoService();
 
   async create(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const body = req.body as {
+      const usuarioId = req.user.sub;
+      const { equipamentoId, statusNovo, version, observacao } = req.body as {
         equipamentoId: string;
         statusNovo: StatusEquipamento;
         version: number;
         observacao?: string;
       };
 
-      const result = await this.service.registrarMovimentacao({
-        ...body,
-        usuarioId: req.user.sub,
-      });
+      const resultado = await this.service.movimentar(
+        equipamentoId,
+        statusNovo,
+        version,
+        usuarioId,
+        observacao
+      );
 
-      return reply.status(201).send(result);
+      return reply.status(201).send(resultado);
     } catch (err) {
       return responderErro(reply, err);
     }
@@ -28,18 +32,21 @@ export class MovimentacaoController {
 
   async createEmMassa(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const body = req.body as {
-        itens: { equipamentoId: string; version: number }[];
+      const usuarioId = req.user.sub;
+      const { itens, statusNovo, observacao } = req.body as {
+        itens: Array<{ equipamentoId: string; version: number }>;
         statusNovo: StatusEquipamento;
         observacao?: string;
       };
 
-      const result = await this.service.registrarMovimentacaoEmMassa({
-        ...body,
-        usuarioId: req.user.sub,
-      });
+      const resultado = await this.service.movimentarEmMassa(
+        itens,
+        statusNovo,
+        usuarioId,
+        observacao
+      );
 
-      return reply.status(201).send(result);
+      return reply.status(201).send(resultado);
     } catch (err) {
       return responderErro(reply, err);
     }
@@ -48,8 +55,8 @@ export class MovimentacaoController {
   async rastrear(req: FastifyRequest, reply: FastifyReply) {
     try {
       const { equipamentoId } = req.params as { equipamentoId: string };
-      const result = await this.service.obterRastreabilidade(equipamentoId);
-      return reply.send(result);
+      const historico = await this.service.rastrear(equipamentoId);
+      return reply.send(historico);
     } catch (err) {
       return responderErro(reply, err);
     }

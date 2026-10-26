@@ -1,24 +1,26 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { Role } from '@prisma/client';
+import { AppError } from '../models/erros.js';
+import { responderErro } from '../utils/http.js';
 
-// Middleware que verifica se a requisição possui um JWT válido no Header Authorization.
-// O formato de erro é { error }, o mesmo declarado nos schemas de resposta das rotas.
-export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
+export async function authenticate(req: FastifyRequest, reply: FastifyReply) {
   try {
-    await request.jwtVerify();
-  } catch (err) {
-    return reply.status(401).send({ error: 'Não autorizado. Token inválido ou ausente.' });
+    await req.jwtVerify();
+  } catch (_err) {
+    return responderErro(reply, new AppError('Token de autenticação ausente ou inválido.', 401));
   }
 }
 
-// Middleware para autorização baseada em Papéis (RBAC)
-export function authorize(allowedRoles: Array<'ADMIN' | 'OPERADOR' | 'CLIENTE'>) {
-  return async (request: FastifyRequest, reply: FastifyReply) => {
-    const userRole = request.user.role;
+export function authorize(rolesPermitidas: Role[]) {
+  return async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const user = req.user as { role: Role };
 
-    if (!allowedRoles.includes(userRole)) {
-      return reply.status(403).send({
-        error: 'Acesso negado. Você não possui o papel necessário para esta ação.',
-      });
+      if (!user || !rolesPermitidas.includes(user.role)) {
+        throw new AppError('Acesso negado: seu perfil não possui permissão para esta operação.', 403);
+      }
+    } catch (err) {
+      return responderErro(reply, err);
     }
   };
 }

@@ -18,17 +18,17 @@ const usuarioSchema = z.object({
 });
 
 export async function usuarioRoutes(app: FastifyInstance) {
-  const controller = new UsuarioController();
+  const usuarioController = new UsuarioController();
 
   app.post('/usuarios', {
     onRequest: [authenticate, authorize(['ADMIN'])],
     schema: {
       tags: ['Usuários'],
-      summary: 'Cadastrar novo usuário (Apenas ADMIN)',
+      summary: 'Cadastrar um novo usuário (Apenas Admin)',
       security: [{ bearerAuth: [] }],
       body: z.object({
         nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
-        email: z.string().email('E-mail inválido'),
+        email: z.string().email('E-mail em formato inválido'),
         senha: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
         role: z.nativeEnum(Role).optional(),
       }),
@@ -40,13 +40,13 @@ export async function usuarioRoutes(app: FastifyInstance) {
         409: erroSchema,
       },
     },
-  }, (req, reply) => controller.create(req, reply));
+  }, (req, reply) => usuarioController.create(req, reply));
 
   app.get('/usuarios', {
     onRequest: [authenticate, authorize(['ADMIN'])],
     schema: {
       tags: ['Usuários'],
-      summary: 'Listar todos os usuários (Apenas ADMIN)',
+      summary: 'Listar todos os usuários cadastrados',
       security: [{ bearerAuth: [] }],
       response: {
         200: z.array(usuarioSchema),
@@ -54,13 +54,13 @@ export async function usuarioRoutes(app: FastifyInstance) {
         403: erroSchema,
       },
     },
-  }, (req, reply) => controller.index(req, reply));
+  }, (req, reply) => usuarioController.index(req, reply));
 
   app.delete('/usuarios/:id', {
     onRequest: [authenticate, authorize(['ADMIN'])],
     schema: {
       tags: ['Usuários'],
-      summary: 'Remover usuário (Apenas ADMIN)',
+      summary: 'Remover um usuário por ID',
       security: [{ bearerAuth: [] }],
       params: z.object({ id: z.string().uuid() }),
       response: {
@@ -70,5 +70,5 @@ export async function usuarioRoutes(app: FastifyInstance) {
         404: erroSchema,
       },
     },
-  }, (req, reply) => controller.delete(req, reply));
+  }, (req, reply) => usuarioController.delete(req, reply));
 }
